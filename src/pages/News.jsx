@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Newspaper, X } from "lucide-react";
@@ -12,7 +11,16 @@ export default function News() {
 
   const { data: news = [], isLoading } = useQuery({
     queryKey: ['news'],
-    queryFn: () => base44.entities.NewsItem.list('-created_date'),
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/news");
+        if (!response.ok) throw new Error("Failed to fetch news");
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching news:", error);
+        return [];
+      }
+    },
   });
 
   const filteredNews = news.filter(item => {

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, BookOpen, SlidersHorizontal, TrendingUp, Clock, User, X } from "lucide-react";
@@ -13,7 +12,20 @@ export default function Blog() {
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['blogPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date'),
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams();
+        if (categoryFilter !== "all") params.append("category", categoryFilter);
+        params.append("sort", sortBy);
+        
+        const response = await fetch(`/api/blog-posts?${params.toString()}`);
+        if (!response.ok) throw new Error("Failed to fetch posts");
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        return [];
+      }
+    },
   });
 
   const filteredAndSortedPosts = useMemo(() => {
@@ -28,20 +40,6 @@ export default function Blog() {
       const matchesCategory = categoryFilter === "all" || post.category === categoryFilter;
       
       return matchesSearch && matchesCategory;
-    });
-
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return new Date(a.created_date) - new Date(b.created_date);
-        case 'popular':
-          return (b.views || 0) - (a.views || 0);
-        case 'author':
-          return a.author.localeCompare(b.author);
-        case 'newest':
-        default:
-          return new Date(b.created_date) - new Date(a.created_date);
-      }
     });
 
     return filtered;

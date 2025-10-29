@@ -1,6 +1,5 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Sparkles, TrendingUp, BookOpen, Newspaper, ArrowRight, Zap, Target, Users } from "lucide-react";
@@ -15,17 +14,44 @@ export default function Home() {
   
   const { data: featuredTools = [] } = useQuery({
     queryKey: ['featuredTools'],
-    queryFn: () => base44.entities.AITool.filter({ is_featured: true }, '-created_date', 6),
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/tools?featured=true&limit=6');
+        if (!response.ok) throw new Error('Failed to fetch tools');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching tools:', error);
+        return [];
+      }
+    },
   });
 
   const { data: recentPosts = [] } = useQuery({
     queryKey: ['recentPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date', 3),
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/blog-posts?limit=3');
+        if (!response.ok) throw new Error('Failed to fetch posts');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        return [];
+      }
+    },
   });
 
   const { data: recentNews = [] } = useQuery({
     queryKey: ['recentNews'],
-    queryFn: () => base44.entities.NewsItem.list('-created_date', 3),
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/news?limit=3');
+        if (!response.ok) throw new Error('Failed to fetch news');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        return [];
+      }
+    },
   });
 
   return (

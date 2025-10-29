@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -25,15 +24,30 @@ export default function BlogPost() {
   const { data: post, isLoading } = useQuery({
     queryKey: ['blogPost', postId],
     queryFn: async () => {
-      const posts = await base44.entities.BlogPost.filter({ id: postId });
-      return posts[0];
+      try {
+        const response = await fetch(`/api/blog-posts/${postId}`);
+        if (!response.ok) throw new Error("Failed to fetch post");
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching post:", error);
+        return null;
+      }
     },
     enabled: !!postId,
   });
 
   const { data: allPosts = [] } = useQuery({
     queryKey: ['blogPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date', 10),
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/blog-posts?limit=10');
+        if (!response.ok) throw new Error('Failed to fetch posts');
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        return [];
+      }
+    },
   });
 
   // Get related posts (same category, excluding current post)
@@ -43,8 +57,14 @@ export default function BlogPost() {
 
   // Increment view count
   const incrementViewMutation = useMutation({
-    mutationFn: (postId) => 
-      base44.entities.BlogPost.update(postId, { views: (post?.views || 0) + 1 }),
+    mutationFn: async (postId) => {
+      const response = await fetch(`/api/blog-posts/${postId}/views`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to increment views');
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogPost', postId] });
     },
