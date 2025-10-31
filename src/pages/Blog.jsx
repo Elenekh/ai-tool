@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useBlogPosts } from "@/hooks/useAPI";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -12,49 +11,44 @@ export default function Blog() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: posts = [], isLoading } = useQuery({
-    queryKey: ['blogPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date'),
-  });
+  const apiParams = useMemo(() => {
+    const params = {
+      ordering:
+        sortBy === "oldest" ? "created_at" :
+        sortBy === "popular" ? "-views" :
+        sortBy === "author" ? "author" :
+        "-created_at",
+    };
 
-  // Filter and sort posts
+    if (categoryFilter !== "all") params.category = categoryFilter;
+    if (searchQuery) params.search = searchQuery;
+
+    return params;
+  }, [categoryFilter, sortBy, searchQuery]);
+
+  const { data, isLoading } = useBlogPosts(apiParams);
+  const posts = Array.isArray(data) ? data : data?.results || [];
+
   const filteredAndSortedPosts = useMemo(() => {
-    let filtered = posts.filter(post => {
-      const matchesSearch = 
+    return posts.filter(post => {
+      const matchesSearch =
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       const matchesCategory = categoryFilter === "all" || post.category === categoryFilter;
-      
       return matchesSearch && matchesCategory;
     });
+  }, [posts, searchQuery, categoryFilter]);
 
-    // Sort posts
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return new Date(a.created_date) - new Date(b.created_date);
-        case 'popular':
-          return (b.views || 0) - (a.views || 0);
-        case 'author':
-          return a.author.localeCompare(b.author);
-        case 'newest':
-        default:
-          return new Date(b.created_date) - new Date(a.created_date);
-      }
-    });
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setSortBy("newest");
+  };
 
-    return filtered;
-  }, [posts, searchQuery, categoryFilter, sortBy]);
-
-  // Get unique authors for quick filtering
-  const authors = useMemo(() => {
-    const uniqueAuthors = [...new Set(posts.map(p => p.author))];
-    return uniqueAuthors.sort();
-  }, [posts]);
+  const hasActiveFilters = categoryFilter !== "all" || searchQuery;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -70,33 +64,22 @@ export default function Blog() {
           <p className="text-xl text-indigo-100 mb-6">
             In-depth articles, tutorials, and insights from AI experts
           </p>
-          
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-white">{posts.length}</div>
               <div className="text-sm text-indigo-100">Articles</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">{authors.length}</div>
-              <div className="text-sm text-indigo-100">Authors</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-white">{posts.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString()}</div>
               <div className="text-sm text-indigo-100">Total Views</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">Weekly</div>
-              <div className="text-sm text-indigo-100">New Posts</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters - Sticky */}
+      {/* Search & Filters */}
       <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Search Bar */}
           <div className="mb-4">
             <div className="relative max-w-2xl">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -119,14 +102,12 @@ export default function Blog() {
             </div>
           </div>
 
-          {/* Filters and Sorting */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
               <SlidersHorizontal className="w-4 h-4" />
               <span className="text-sm font-medium">Filter & Sort:</span>
             </div>
 
-            {/* Category Filter */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <SelectValue placeholder="Category" />
@@ -143,80 +124,37 @@ export default function Blog() {
               </SelectContent>
             </Select>
 
-            {/* Sort By */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Newest First
-                  </div>
-                </SelectItem>
-                <SelectItem value="oldest">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Oldest First
-                  </div>
-                </SelectItem>
-                <SelectItem value="popular">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Most Popular
-                  </div>
-                </SelectItem>
-                <SelectItem value="author">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Author (A-Z)
-                  </div>
-                </SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="author">Author (A-Z)</SelectItem>
               </SelectContent>
             </Select>
 
-            {/* Results count */}
             <div className="ml-auto text-sm text-gray-600 dark:text-gray-400">
               Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredAndSortedPosts.length}</span> of {posts.length} articles
             </div>
           </div>
 
-          {/* Active Filters */}
-          {(categoryFilter !== "all" || searchQuery) && (
+          {hasActiveFilters && (
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
               <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
               {searchQuery && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSearchQuery("")}
-                  className="h-7"
-                >
-                  Search: "{searchQuery}"
-                  <span className="ml-1">×</span>
+                <Button variant="secondary" size="sm" onClick={() => setSearchQuery("")} className="h-7">
+                  Search: "{searchQuery}" ×
                 </Button>
               )}
               {categoryFilter !== "all" && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCategoryFilter("all")}
-                  className="h-7"
-                >
-                  {categoryFilter}
-                  <span className="ml-1">×</span>
+                <Button variant="secondary" size="sm" onClick={() => setCategoryFilter("all")} className="h-7">
+                  {categoryFilter} ×
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setCategoryFilter("all");
-                }}
-                className="h-7 text-red-600 hover:text-red-700"
-              >
+              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-red-600 hover:text-red-700">
                 Clear All
               </Button>
             </div>
@@ -234,7 +172,7 @@ export default function Blog() {
           </div>
         ) : filteredAndSortedPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredAndSortedPosts.map((post) => (
+            {filteredAndSortedPosts.map(post => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>
@@ -244,18 +182,8 @@ export default function Blog() {
             <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
               No articles found
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Try adjusting your search or filters
-            </p>
-            <Button
-              onClick={() => {
-                setSearchQuery("");
-                setCategoryFilter("all");
-              }}
-              variant="outline"
-            >
-              Clear Filters
-            </Button>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Try adjusting your search or filters</p>
+            <Button onClick={handleClearFilters} variant="outline">Clear Filters</Button>
           </div>
         )}
       </div>

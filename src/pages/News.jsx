@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import React, { useState, useMemo } from "react";
+import { useNews } from "@/hooks/useAPI";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Newspaper } from "lucide-react";
@@ -10,17 +9,43 @@ export default function News() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const { data: news = [], isLoading } = useQuery({
-    queryKey: ['news'],
-    queryFn: () => base44.entities.NewsItem.list('-created_date'),
-  });
+  // Build API params
+  const apiParams = useMemo(() => {
+    const params = {
+      ordering: '-created_at',
+    };
 
-  const filteredNews = news.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.summary.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+    if (categoryFilter !== "all") {
+      params.category = categoryFilter;
+    }
+    if (searchQuery) {
+      params.search = searchQuery;
+    }
+
+    return params;
+  }, [categoryFilter, searchQuery]);
+
+  // Fetch news from API
+  const { data, isLoading } = useNews(apiParams);
+
+  // Normalize API response: support both array and paginated { results: [...] } responses
+  const news = useMemo(() => {
+    if (Array.isArray(data)) return data;
+    if (!data) return [];
+    // If the API returns a paginated object like { count, next, previous, results }
+    return data.results ?? [];
+  }, [data]);
+
+  // Client-side filtering (guard field access)
+  const filteredNews = useMemo(() => {
+    const q = (searchQuery || "").trim().toLowerCase();
+    if (!q) return news;
+    return news.filter(item => {
+      const title = (item.title || "").toString().toLowerCase();
+      const summary = (item.summary || "").toString().toLowerCase();
+      return title.includes(q) || summary.includes(q);
+    });
+  }, [news, searchQuery]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
@@ -41,6 +41,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         # Apply custom permission for unsafe methods
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthorOrAdmin()]
+        elif self.action == 'increment_views':
+            return [AllowAny()]  # Anyone can increment views
         return super().get_permissions()
 
     @action(detail=True, methods=['post'])

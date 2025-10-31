@@ -16,6 +16,15 @@ export default function NewsCard({ news }) {
     "Events": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400"
   };
 
+  // Safe date formatting
+  let formattedDate = "Unknown date";
+  if (news?.created_date) {
+    const dateObj = new Date(news.created_date);
+    if (!isNaN(dateObj)) {
+      formattedDate = format(dateObj, "MMM d, yyyy");
+    }
+  }
+
   return (
     <Card className="card-hover bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 overflow-hidden group">
       <CardContent className="p-6">
@@ -26,7 +35,7 @@ export default function NewsCard({ news }) {
           </Badge>
           <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
             <Calendar className="w-4 h-4" />
-            <span>{format(new Date(news.created_date), "MMM d, yyyy")}</span>
+            <span>{formattedDate}</span>
           </div>
         </div>
 
@@ -40,7 +49,7 @@ export default function NewsCard({ news }) {
           {news.summary}
         </p>
 
-        {/* Source & Tags */}
+        {/* Source & External URL */}
         <div className="flex items-center justify-between">
           {news.source && (
             <span className="text-sm text-gray-500 dark:text-gray-400">

@@ -1,7 +1,5 @@
-
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useTool } from "@/hooks/useAPI";
 import { useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -22,14 +20,8 @@ export default function AIToolDetail() {
   const [searchParams] = useSearchParams();
   const toolId = searchParams.get('id');
 
-  const { data: tool, isLoading } = useQuery({
-    queryKey: ['tool', toolId],
-    queryFn: async () => {
-      const tools = await base44.entities.AITool.filter({ id: toolId });
-      return tools[0];
-    },
-    enabled: !!toolId,
-  });
+  // Fetch tool data from API
+  const { data: tool, isLoading, error } = useTool(toolId);
 
   if (isLoading) {
     return (
@@ -42,11 +34,14 @@ export default function AIToolDetail() {
     );
   }
 
-  if (!tool) {
+  if (error || !tool) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Tool not found</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {error?.message || 'Unable to load this tool'}
+          </p>
           <Link to={createPageUrl("AITools")}>
             <Button variant="outline">Back to Tools</Button>
           </Link>
@@ -72,7 +67,7 @@ export default function AIToolDetail() {
     { icon: DollarSign, label: "Pricing", value: tool.pricing, color: "from-green-500 to-emerald-500" },
     { icon: Gauge, label: "Complexity", value: tool.difficulty, color: "from-orange-500 to-red-500" },
     { icon: Users, label: "Users", value: tool.users || "N/A", color: "from-blue-500 to-cyan-500" },
-    { icon: Trophy, label: "Rating", value: `${tool.rating}/5`, color: "from-yellow-500 to-amber-500" }
+    { icon: Trophy, label: "Rating", value: `${tool.rating?.toFixed(1) || 0}/5`, color: "from-yellow-500 to-amber-500" }
   ];
 
   return (
@@ -117,10 +112,10 @@ export default function AIToolDetail() {
                   </h1>
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      {renderStars(tool.rating)}
+                      {renderStars(tool.rating || 0)}
                     </div>
                     <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                      {tool.rating?.toFixed(1)}
+                      {tool.rating?.toFixed(1) || 0}
                     </span>
                   </div>
                 </div>

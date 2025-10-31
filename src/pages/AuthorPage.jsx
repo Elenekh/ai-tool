@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useAuthor, useBlogPosts } from "@/hooks/useAPI";
 import { useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -14,36 +13,29 @@ export default function AuthorPage() {
   const authorSlug = searchParams.get('slug');
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: author, isLoading: authorLoading } = useQuery({
-    queryKey: ['author', authorSlug],
-    queryFn: async () => {
-      const authors = await base44.entities.Author.filter({ slug: authorSlug });
-      return authors[0];
-    },
-    enabled: !!authorSlug,
-  });
+  // Fetch author data
+  const { data: author, isLoading: authorLoading, error: authorError } = useAuthor(authorSlug);
 
-  const { data: allPosts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['blogPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date'),
+  // Fetch all blog posts
+  const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts({
+    ordering: '-created_at',
   });
 
   // Filter posts by author
   const authorPosts = useMemo(() => {
     if (!author) return [];
     
-    let filtered = allPosts.filter(post => post.author === author.author_name);
+    let filtered = allPosts.filter(post => post.author === author.name);
     
-    // Sort posts
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
-          return new Date(a.created_date) - new Date(b.created_date);
+          return new Date(a.created_at) - new Date(b.created_at);
         case 'popular':
           return (b.views || 0) - (a.views || 0);
         case 'newest':
         default:
-          return new Date(b.created_date) - new Date(a.created_date);
+          return new Date(b.created_at) - new Date(a.created_at);
       }
     });
     
@@ -77,7 +69,7 @@ export default function AuthorPage() {
     );
   }
 
-  if (!author) {
+  if (authorError || !author) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -101,19 +93,8 @@ export default function AuthorPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Cover Image / Header Banner */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        {author.cover_image ? (
-          <>
-            <img
-              src={author.cover_image}
-              alt={`${author.author_name} cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-gray-50 dark:to-gray-950"></div>
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
-        )}
+      <div className="relative h-64 md:h-80 overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50 dark:to-gray-950"></div>
         
         {/* Breadcrumbs */}
         <div className="absolute top-8 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,17 +110,12 @@ export default function AuthorPage() {
         <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              {author.author_name}
+              {author.name}
             </h1>
             {author.is_verified && (
               <CheckCircle className="w-8 h-8 text-blue-500 fill-current" />
             )}
           </div>
-          {author.role_or_title && (
-            <p className="text-xl text-white/90 mt-2">
-              {author.role_or_title}
-            </p>
-          )}
         </div>
       </div>
 
@@ -151,17 +127,17 @@ export default function AuthorPage() {
               {/* Profile Image */}
               <div className="flex-shrink-0">
                 {author.profile_image ? (
-                  <div className="w-32 h-32 rounded-full overflow-hidden shadow-xl border-4 border-white dark:border-gray-800 group-hover:shadow-2xl transition-shadow">
+                  <div className="w-32 h-32 rounded-full overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
                     <img
                       src={author.profile_image}
-                      alt={author.author_name}
+                      alt={author.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-xl border-4 border-white dark:border-gray-800">
                     <span className="text-5xl font-bold text-white">
-                      {author.author_name.charAt(0)}
+                      {author.name.charAt(0)}
                     </span>
                   </div>
                 )}
@@ -250,7 +226,7 @@ export default function AuthorPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Articles by {author.author_name}
+                Articles by {author.name}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
                 {stats.totalPosts} article{stats.totalPosts !== 1 ? 's' : ''} published

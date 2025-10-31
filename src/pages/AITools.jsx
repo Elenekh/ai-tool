@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import React, { useState, useMemo } from "react";
+import { useTools } from "@/hooks/useAPI";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ToolCard from "../components/ToolCard";
 
@@ -14,32 +13,57 @@ export default function AITools() {
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: tools = [], isLoading } = useQuery({
-    queryKey: ['tools'],
-    queryFn: () => base44.entities.AITool.list('-created_date'),
-  });
+  // Build query params for API
+  const apiParams = useMemo(() => {
+    const params = {
+      ordering: sortBy === "newest" ? "-created_at" : 
+                sortBy === "rating" ? "-rating" : 
+                "name",
+    };
 
-  const filteredTools = tools.filter(tool => {
-    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || tool.category === categoryFilter;
-    const matchesPricing = pricingFilter === "all" || tool.pricing === pricingFilter;
-    const matchesDifficulty = difficultyFilter === "all" || tool.difficulty === difficultyFilter;
-    
-    return matchesSearch && matchesCategory && matchesPricing && matchesDifficulty;
-  });
-
-  const sortedTools = [...filteredTools].sort((a, b) => {
-    switch (sortBy) {
-      case 'rating':
-        return (b.rating || 0) - (a.rating || 0);
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'newest':
-      default:
-        return new Date(b.created_date) - new Date(a.created_date);
+    if (categoryFilter !== "all") {
+      params.category = categoryFilter;
     }
-  });
+    if (pricingFilter !== "all") {
+      params.pricing = pricingFilter;
+    }
+    if (difficultyFilter !== "all") {
+      params.difficulty = difficultyFilter;
+    }
+    if (searchQuery) {
+      params.search = searchQuery;
+    }
+
+    return params;
+  }, [categoryFilter, pricingFilter, difficultyFilter, sortBy, searchQuery]);
+
+  // Fetch tools from API
+  const { data: tools = [], isLoading } = useTools(apiParams);
+
+  // Client-side filtering (since API doesn't support full-text search on all fields)
+  const filteredTools = useMemo(() => {
+    return tools.filter(tool => {
+      const matchesSearch = 
+        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }, [tools, searchQuery]);
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setPricingFilter("all");
+    setDifficultyFilter("all");
+    setSortBy("newest");
+  };
+
+  const hasActiveFilters = 
+    searchQuery || 
+    categoryFilter !== "all" || 
+    pricingFilter !== "all" || 
+    difficultyFilter !== "all";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -106,6 +130,19 @@ export default function AITools() {
               </SelectContent>
             </Select>
 
+            {/* Difficulty Filter */}
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="Beginner">Beginner</SelectItem>
+                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                <SelectItem value="Advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Sort By */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -120,8 +157,8 @@ export default function AITools() {
           </div>
 
           {/* Active Filters Display */}
-          {(categoryFilter !== "all" || pricingFilter !== "all" || difficultyFilter !== "all" || searchQuery) && (
-            <div className="flex items-center gap-2 mt-4">
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
               <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
               {searchQuery && (
                 <Button
@@ -156,16 +193,22 @@ export default function AITools() {
                   <span className="ml-1">×</span>
                 </Button>
               )}
+              {difficultyFilter !== "all" && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setDifficultyFilter("all")}
+                  className="h-7"
+                >
+                  {difficultyFilter}
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setCategoryFilter("all");
-                  setPricingFilter("all");
-                  setDifficultyFilter("all");
-                }}
-                className="h-7 text-red-600 hover:text-red-700"
+                onClick={handleClearFilters}
+                className="h-7 text-red-600 hover:text-red-700 ml-auto"
               >
                 Clear All
               </Button>
@@ -182,15 +225,15 @@ export default function AITools() {
               <div key={i} className="h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
             ))}
           </div>
-        ) : sortedTools.length > 0 ? (
+        ) : filteredTools.length > 0 ? (
           <>
             <div className="flex items-center justify-between mb-8">
               <p className="text-gray-600 dark:text-gray-400">
-                Showing <span className="font-semibold text-gray-900 dark:text-white">{sortedTools.length}</span> tool{sortedTools.length !== 1 ? 's' : ''}
+                Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredTools.length}</span> tool{filteredTools.length !== 1 ? 's' : ''}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {sortedTools.map((tool) => (
+              {filteredTools.map((tool) => (
                 <ToolCard key={tool.id} tool={tool} />
               ))}
             </div>
@@ -204,15 +247,7 @@ export default function AITools() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Try adjusting your filters or search query
             </p>
-            <Button
-              onClick={() => {
-                setSearchQuery("");
-                setCategoryFilter("all");
-                setPricingFilter("all");
-                setDifficultyFilter("all");
-              }}
-              variant="outline"
-            >
+            <Button onClick={handleClearFilters} variant="outline">
               Clear Filters
             </Button>
           </div>

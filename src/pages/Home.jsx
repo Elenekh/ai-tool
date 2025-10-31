@@ -1,6 +1,9 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { 
+  useTools, 
+  useBlogPosts, 
+  useNews 
+} from "@/hooks/useAPI";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -14,19 +17,22 @@ import { translations } from "@/components/translations";
 export default function Home() {
   const { t } = useLanguage();
   
-  const { data: featuredTools = [] } = useQuery({
-    queryKey: ['featuredTools'],
-    queryFn: () => base44.entities.AITool.filter({ is_featured: true }, '-created_date', 3),
+  // Fetch featured tools
+  const { data: allTools = [], isLoading: toolsLoading } = useTools({
+    is_featured: true,
+    ordering: '-created_at',
+  });
+  
+  const featuredTools = allTools.slice(0, 3);
+
+  // Fetch recent blog posts
+  const { data: recentPosts = [], isLoading: postsLoading } = useBlogPosts({
+    ordering: '-created_at',
   });
 
-  const { data: recentPosts = [] } = useQuery({
-    queryKey: ['recentPosts'],
-    queryFn: () => base44.entities.BlogPost.list('-created_date', 3),
-  });
-
-  const { data: recentNews = [] } = useQuery({
-    queryKey: ['recentNews'],
-    queryFn: () => base44.entities.NewsItem.list('-created_date', 3),
+  // Fetch recent news
+  const { data: recentNews = [], isLoading: newsLoading } = useNews({
+    ordering: '-created_at',
   });
 
   return (
@@ -100,7 +106,7 @@ export default function Home() {
       </section>
 
       {/* Featured Tools Section */}
-      {featuredTools.length > 0 && (
+      {!toolsLoading && featuredTools.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-center justify-between mb-12">
             <div>
@@ -137,7 +143,7 @@ export default function Home() {
       )}
 
       {/* Latest Blog Posts Section */}
-      {recentPosts.length > 0 && (
+      {!postsLoading && recentPosts.length > 0 && (
         <section className="bg-white dark:bg-gray-900 py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-12">
@@ -161,7 +167,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {recentPosts.map((post) => (
+              {recentPosts.slice(0, 3).map((post) => (
                 <BlogCard key={post.id} post={post} />
               ))}
             </div>
@@ -179,7 +185,7 @@ export default function Home() {
       )}
 
       {/* Latest News Section */}
-      {recentNews.length > 0 && (
+      {!newsLoading && recentNews.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-center justify-between mb-12">
             <div>
@@ -202,8 +208,8 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentNews.map((news) => (
-              <NewsCard key={news.id} news={news} />
+            {recentNews.slice(0, 3).map((newsItem) => (
+              <NewsCard key={newsItem.id} news={newsItem} />
             ))}
           </div>
 
