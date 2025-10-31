@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Newspaper, X } from "lucide-react";
+import { Search, Newspaper } from "lucide-react";
 import NewsCard from "../components/NewsCard";
 
 export default function News() {
@@ -11,16 +12,7 @@ export default function News() {
 
   const { data: news = [], isLoading } = useQuery({
     queryKey: ['news'],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/news");
-        if (!response.ok) throw new Error("Failed to fetch news");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching news:", error);
-        return [];
-      }
-    },
+    queryFn: () => base44.entities.NewsItem.list('-created_date'),
   });
 
   const filteredNews = news.filter(item => {
@@ -31,69 +23,41 @@ export default function News() {
   });
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20" style={{
-          background: 'radial-gradient(circle at 50% 30%, rgba(229, 84, 46, 0.2) 0%, transparent 60%)'
-        }}></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 mb-6">
-            <Newspaper className="w-12 h-12 text-orange-400" />
-            <h1 className="text-5xl md:text-6xl font-bold text-white">
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Newspaper className="w-12 h-12 text-white" />
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
               AI News & Updates
             </h1>
           </div>
-          <p className="text-xl text-neutral-400">
+          <p className="text-xl text-indigo-100">
             Stay updated with the latest developments in the AI industry
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="sticky top-20 z-40 py-6" style={{
-        background: 'rgba(29, 30, 26, 0.9)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+      <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-500" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 placeholder="Search news..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-14 h-12 rounded-[16px] border-0 text-white placeholder:text-neutral-500"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(20px)'
-                }}
+                className="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-                >
-                  <X className="w-4 h-4 text-neutral-400" />
-                </button>
-              )}
             </div>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-12 rounded-[16px] border-0 text-white" style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(20px)'
-              }}>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent className="rounded-[14px]" style={{
-                background: 'rgba(29, 30, 26, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
+              <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="Product Launch">Product Launch</SelectItem>
                 <SelectItem value="Feature Update">Feature Update</SelectItem>
@@ -104,42 +68,37 @@ export default function News() {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="text-center mt-5">
-            <span className="text-sm text-neutral-500">
-              <span className="font-semibold text-white">{filteredNews.length}</span> news items
-            </span>
-          </div>
         </div>
       </div>
 
       {/* News Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="h-80 rounded-[24px] animate-pulse" style={{
-                background: 'rgba(255, 255, 255, 0.03)'
-              }} />
+              <div key={i} className="h-80 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filteredNews.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredNews.map((item) => (
-              <NewsCard key={item.id} news={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24">
-            <div className="w-20 h-20 rounded-[20px] flex items-center justify-center mx-auto mb-6" style={{
-              background: 'rgba(255, 255, 255, 0.05)'
-            }}>
-              <Search className="w-10 h-10 text-neutral-600" />
+          <>
+            <div className="mb-8">
+              <p className="text-gray-600 dark:text-gray-400">
+                Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredNews.length}</span> news item{filteredNews.length !== 1 ? 's' : ''}
+              </p>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredNews.map((item) => (
+                <NewsCard key={item.id} news={item} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-20">
+            <Search className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
               No news found
             </h3>
-            <p className="text-neutral-400">
+            <p className="text-gray-600 dark:text-gray-400">
               Try a different search term or category
             </p>
           </div>

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, BookOpen, SlidersHorizontal, TrendingUp, Clock, User, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, BookOpen, SlidersHorizontal, TrendingUp, Clock, User } from "lucide-react";
 import BlogCard from "../components/BlogCard";
 
 export default function Blog() {
@@ -12,22 +14,10 @@ export default function Blog() {
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['blogPosts'],
-    queryFn: async () => {
-      try {
-        const params = new URLSearchParams();
-        if (categoryFilter !== "all") params.append("category", categoryFilter);
-        params.append("sort", sortBy);
-        
-        const response = await fetch(`/api/blog-posts?${params.toString()}`);
-        if (!response.ok) throw new Error("Failed to fetch posts");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        return [];
-      }
-    },
+    queryFn: () => base44.entities.BlogPost.list('-created_date'),
   });
 
+  // Filter and sort posts
   const filteredAndSortedPosts = useMemo(() => {
     let filtered = posts.filter(post => {
       const matchesSearch = 
@@ -42,88 +32,106 @@ export default function Blog() {
       return matchesSearch && matchesCategory;
     });
 
+    // Sort posts
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.created_date) - new Date(b.created_date);
+        case 'popular':
+          return (b.views || 0) - (a.views || 0);
+        case 'author':
+          return a.author.localeCompare(b.author);
+        case 'newest':
+        default:
+          return new Date(b.created_date) - new Date(a.created_date);
+      }
+    });
+
     return filtered;
   }, [posts, searchQuery, categoryFilter, sortBy]);
 
-  const hasActiveFilters = categoryFilter !== "all" || searchQuery;
+  // Get unique authors for quick filtering
+  const authors = useMemo(() => {
+    const uniqueAuthors = [...new Set(posts.map(p => p.author))];
+    return uniqueAuthors.sort();
+  }, [posts]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20" style={{
-          background: 'radial-gradient(circle at 50% 30%, rgba(31, 105, 73, 0.2) 0%, transparent 60%)'
-        }}></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 mb-6">
-            <BookOpen className="w-12 h-12 text-green-400" />
-            <h1 className="text-5xl md:text-6xl font-bold text-white">
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 mb-4">
+            <BookOpen className="w-12 h-12 text-white" />
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
               Blog & Guides
             </h1>
           </div>
-          <p className="text-xl text-neutral-400 mb-8">
+          <p className="text-xl text-indigo-100 mb-6">
             In-depth articles, tutorials, and insights from AI experts
           </p>
           
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
-            {[
-              { value: posts.length, label: "Articles" },
-              { value: new Set(posts.map(p => p.author)).size, label: "Authors" },
-              { value: posts.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString(), label: "Views" },
-              { value: "Weekly", label: "Updates" }
-            ].map((stat, i) => (
-              <div key={i} className="rounded-[18px] p-6 text-center" style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.06)'
-              }}>
-                <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-neutral-400">{stat.label}</div>
-              </div>
-            ))}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">{posts.length}</div>
+              <div className="text-sm text-indigo-100">Articles</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">{authors.length}</div>
+              <div className="text-sm text-indigo-100">Authors</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">{posts.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString()}</div>
+              <div className="text-sm text-indigo-100">Total Views</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">Weekly</div>
+              <div className="text-sm text-indigo-100">New Posts</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="sticky top-36 z-40 py-6" style={{
-        background: 'rgba(29, 30, 26, 0.9)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
-      }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Search */}
-          <div className="mb-5">
-            <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-500" />
+      {/* Search and Filters - Sticky */}
+      <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative max-w-2xl">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Search articles, authors, or topics..."
+                placeholder="Search articles, authors, or AI topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-14 h-12 rounded-[16px] border-0 text-white placeholder:text-neutral-500"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(20px)'
-                }}
+                className="pl-12 pr-4 h-12 text-base bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                >
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3 justify-center">
+          {/* Filters and Sorting */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+              <SlidersHorizontal className="w-4 h-4" />
+              <span className="text-sm font-medium">Filter & Sort:</span>
+            </div>
+
+            {/* Category Filter */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-44 h-10 rounded-[12px] border-0 text-white text-sm" style={{
-                background: 'rgba(255, 255, 255, 0.05)'
-              }}>
+              <SelectTrigger className="w-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent className="rounded-[14px]" style={{
-                background: 'rgba(29, 30, 26, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
+              <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="AI Tools">AI Tools</SelectItem>
                 <SelectItem value="Tutorials">Tutorials</SelectItem>
@@ -135,58 +143,93 @@ export default function Blog() {
               </SelectContent>
             </Select>
 
+            {/* Sort By */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-44 h-10 rounded-[12px] border-0 text-white text-sm" style={{
-                background: 'rgba(255, 255, 255, 0.05)'
-              }}>
+              <SelectTrigger className="w-40 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
-              <SelectContent className="rounded-[14px]" style={{
-                background: 'rgba(29, 30, 26, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="popular">Most Popular</SelectItem>
-                <SelectItem value="author">Author (A-Z)</SelectItem>
+              <SelectContent>
+                <SelectItem value="newest">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Newest First
+                  </div>
+                </SelectItem>
+                <SelectItem value="oldest">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Oldest First
+                  </div>
+                </SelectItem>
+                <SelectItem value="popular">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Most Popular
+                  </div>
+                </SelectItem>
+                <SelectItem value="author">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Author (A-Z)
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
 
-            {hasActiveFilters && (
-              <button
+            {/* Results count */}
+            <div className="ml-auto text-sm text-gray-600 dark:text-gray-400">
+              Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredAndSortedPosts.length}</span> of {posts.length} articles
+            </div>
+          </div>
+
+          {/* Active Filters */}
+          {(categoryFilter !== "all" || searchQuery) && (
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
+              {searchQuery && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="h-7"
+                >
+                  Search: "{searchQuery}"
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
+              {categoryFilter !== "all" && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCategoryFilter("all")}
+                  className="h-7"
+                >
+                  {categoryFilter}
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSearchQuery("");
                   setCategoryFilter("all");
                 }}
-                className="px-4 py-2 rounded-[12px] text-sm font-medium"
-                style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  color: '#ef4444'
-                }}
+                className="h-7 text-red-600 hover:text-red-700"
               >
                 Clear All
-              </button>
-            )}
-          </div>
-
-          {/* Results count */}
-          <div className="text-center mt-5">
-            <span className="text-sm text-neutral-500">
-              <span className="font-semibold text-white">{filteredAndSortedPosts.length}</span> of {posts.length} articles
-            </span>
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Posts Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="h-96 rounded-[24px] animate-pulse" style={{
-                background: 'rgba(255, 255, 255, 0.03)'
-              }} />
+              <div key={i} className="h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filteredAndSortedPosts.length > 0 ? (
@@ -196,18 +239,23 @@ export default function Blog() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-24">
-            <div className="w-20 h-20 rounded-[20px] flex items-center justify-center mx-auto mb-6" style={{
-              background: 'rgba(255, 255, 255, 0.05)'
-            }}>
-              <Search className="w-10 h-10 text-neutral-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
+          <div className="text-center py-20">
+            <Search className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
               No articles found
             </h3>
-            <p className="text-neutral-400 mb-8">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Try adjusting your search or filters
             </p>
+            <Button
+              onClick={() => {
+                setSearchQuery("");
+                setCategoryFilter("all");
+              }}
+              variant="outline"
+            >
+              Clear Filters
+            </Button>
           </div>
         )}
       </div>

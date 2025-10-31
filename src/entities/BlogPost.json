@@ -1,0 +1,143 @@
+{
+  "name": "BlogPost",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Blog post title (fallback)"
+    },
+    "title_en": {
+      "type": "string",
+      "description": "Title in English"
+    },
+    "title_ka": {
+      "type": "string",
+      "description": "Title in Georgian"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name"
+    },
+    "author_bio": {
+      "type": "string",
+      "description": "Short author biography (fallback)"
+    },
+    "author_bio_en": {
+      "type": "string",
+      "description": "Author bio in English"
+    },
+    "author_bio_ka": {
+      "type": "string",
+      "description": "Author bio in Georgian"
+    },
+    "author_avatar": {
+      "type": "string",
+      "description": "Author profile picture URL"
+    },
+    "author_social": {
+      "type": "object",
+      "properties": {
+        "linkedin": {
+          "type": "string"
+        },
+        "twitter": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        }
+      },
+      "description": "Author social media links"
+    },
+    "featured_image": {
+      "type": "string",
+      "description": "Featured image URL"
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "Short excerpt or summary (fallback)"
+    },
+    "excerpt_en": {
+      "type": "string",
+      "description": "Excerpt in English"
+    },
+    "excerpt_ka": {
+      "type": "string",
+      "description": "Excerpt in Georgian"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full blog post content (fallback, markdown supported)"
+    },
+    "content_en": {
+      "type": "string",
+      "description": "Full content in English (markdown)"
+    },
+    "content_ka": {
+      "type": "string",
+      "description": "Full content in Georgian (markdown)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "AI Tools",
+        "Tutorials",
+        "Reviews",
+        "Updates",
+        "Case Studies",
+        "Productivity",
+        "Education",
+        "Other"
+      ],
+      "description": "Article category"
+    },
+    "category_en": {
+      "type": "string",
+      "description": "Category in English"
+    },
+    "category_ka": {
+      "type": "string",
+      "description": "Category in Georgian"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Article tags (English)"
+    },
+    "tags_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags in English"
+    },
+    "tags_ka": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags in Georgian"
+    },
+    "read_time": {
+      "type": "number",
+      "description": "Estimated read time in minutes"
+    },
+    "views": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of views"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to feature on homepage"
+    }
+  },
+  "required": [
+    "title",
+    "author",
+    "content"
+  ]
+}

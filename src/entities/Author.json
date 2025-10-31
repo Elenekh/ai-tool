@@ -1,0 +1,73 @@
+{
+  "name": "Author",
+  "type": "object",
+  "properties": {
+    "author_name": {
+      "type": "string",
+      "description": "Full name of the author"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-friendly identifier (e.g., 'john-doe')"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "Profile photo URL (round, 200x200px minimum)"
+    },
+    "cover_image": {
+      "type": "string",
+      "description": "Banner/cover background image URL"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Short biography or description"
+    },
+    "role_or_title": {
+      "type": "string",
+      "description": "Professional title (e.g., 'AI Writer', 'Designer')"
+    },
+    "location": {
+      "type": "string",
+      "description": "City, Country (optional)"
+    },
+    "linkedin_url": {
+      "type": "string",
+      "description": "LinkedIn profile URL"
+    },
+    "instagram_url": {
+      "type": "string",
+      "description": "Instagram profile URL"
+    },
+    "github_url": {
+      "type": "string",
+      "description": "GitHub profile URL"
+    },
+    "twitter_url": {
+      "type": "string",
+      "description": "Twitter/X profile URL"
+    },
+    "personal_website": {
+      "type": "string",
+      "description": "Personal website URL"
+    },
+    "total_posts": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of posts written"
+    },
+    "total_views": {
+      "type": "number",
+      "default": 0,
+      "description": "Total views across all posts"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the author is verified"
+    }
+  },
+  "required": [
+    "author_name",
+    "slug"
+  ]
+}

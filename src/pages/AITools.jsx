@@ -1,292 +1,222 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { base44 } from "@/api/base44Client";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, MapPin, ExternalLink, Linkedin, Instagram, Github, Twitter, Globe, BookOpen, Eye, FileText, CheckCircle } from "lucide-react";
-import BlogCard from "../components/BlogCard";
+import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ToolCard from "../components/ToolCard";
 
-export default function AuthorPage() {
-  const [searchParams] = useSearchParams();
-  const authorSlug = searchParams.get('slug');
+export default function AITools() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [pricingFilter, setPricingFilter] = useState("all");
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: author, isLoading: authorLoading } = useQuery({
-    queryKey: ['author', authorSlug],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/authors/${authorSlug}`);
-        if (!response.ok) throw new Error("Failed to fetch author");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching author:", error);
-        return null;
-      }
-    },
-    enabled: !!authorSlug,
+  const { data: tools = [], isLoading } = useQuery({
+    queryKey: ['tools'],
+    queryFn: () => base44.entities.AITool.list('-created_date'),
   });
 
-  const { data: allPosts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['authorPosts', author?.id],
-    queryFn: async () => {
-      if (!author?.id) return [];
-      try {
-        const response = await fetch(`/api/authors/${author.id}/posts?sort=${sortBy}`);
-        if (!response.ok) throw new Error("Failed to fetch posts");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        return [];
-      }
-    },
-    enabled: !!author?.id,
+  const filteredTools = tools.filter(tool => {
+    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || tool.category === categoryFilter;
+    const matchesPricing = pricingFilter === "all" || tool.pricing === pricingFilter;
+    const matchesDifficulty = difficultyFilter === "all" || tool.difficulty === difficultyFilter;
+    
+    return matchesSearch && matchesCategory && matchesPricing && matchesDifficulty;
   });
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    if (!allPosts.length) return { totalPosts: 0, totalViews: 0, avgReadTime: 0 };
-    
-    const totalViews = allPosts.reduce((sum, post) => sum + (post.views || 0), 0);
-    const avgReadTime = Math.round(
-      allPosts.reduce((sum, post) => sum + (post.read_time || 0), 0) / allPosts.length
-    );
-    
-    return {
-      totalPosts: allPosts.length,
-      totalViews,
-      avgReadTime
-    };
-  }, [allPosts]);
-
-  if (authorLoading || postsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading author profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!author) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Author not found</h2>
-          <Link to={createPageUrl("Blog")}>
-            <Button variant="outline">Back to Blog</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const socialLinks = [
-    { icon: Linkedin, url: author.linkedin_url, label: "LinkedIn", color: "hover:text-blue-600" },
-    { icon: Twitter, url: author.twitter_url, label: "Twitter", color: "hover:text-sky-500" },
-    { icon: Instagram, url: author.instagram_url, label: "Instagram", color: "hover:text-pink-600" },
-    { icon: Github, url: author.github_url, label: "GitHub", color: "hover:text-gray-900 dark:hover:text-white" },
-    { icon: Globe, url: author.personal_website, label: "Website", color: "hover:text-indigo-600" }
-  ].filter(link => link.url);
+  const sortedTools = [...filteredTools].sort((a, b) => {
+    switch (sortBy) {
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'newest':
+      default:
+        return new Date(b.created_date) - new Date(a.created_date);
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Cover Image / Header Banner */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        {author.cover_image ? (
-          <>
-            <img
-              src={author.cover_image}
-              alt={`${author.author_name} cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-gray-50 dark:to-gray-950"></div>
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
-        )}
-        
-        {/* Breadcrumbs */}
-        <div className="absolute top-8 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link to={createPageUrl("Blog")}>
-            <Button variant="ghost" className="text-white hover:bg-white/20 -ml-2">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Blog
-            </Button>
-          </Link>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            AI Tools Directory
+          </h1>
+          <p className="text-xl text-indigo-100">
+            Discover and compare {tools.length}+ cutting-edge AI tools
+          </p>
         </div>
+      </div>
 
-        {/* Author Name Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          <div className="flex items-center gap-3">
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              {author.author_name}
-            </h1>
-            {author.is_verified && (
-              <CheckCircle className="w-8 h-8 text-blue-500 fill-current" />
-            )}
+      {/* Filters Section */}
+      <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                placeholder="Search AI tools..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="Writing">Writing</SelectItem>
+                <SelectItem value="Design">Design</SelectItem>
+                <SelectItem value="Presentation">Presentation</SelectItem>
+                <SelectItem value="Productivity">Productivity</SelectItem>
+                <SelectItem value="Image Generation">Image Generation</SelectItem>
+                <SelectItem value="Video Editing">Video Editing</SelectItem>
+                <SelectItem value="Code Assistant">Code Assistant</SelectItem>
+                <SelectItem value="Voice & Audio">Voice & Audio</SelectItem>
+                <SelectItem value="Research">Research</SelectItem>
+                <SelectItem value="Marketing">Marketing</SelectItem>
+                <SelectItem value="Data Analysis">Data Analysis</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Pricing Filter */}
+            <Select value={pricingFilter} onValueChange={setPricingFilter}>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectValue placeholder="Pricing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Pricing</SelectItem>
+                <SelectItem value="Free">Free</SelectItem>
+                <SelectItem value="Freemium">Freemium</SelectItem>
+                <SelectItem value="Paid">Paid</SelectItem>
+                <SelectItem value="Enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Sort By */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="name">Name (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          {author.role_or_title && (
-            <p className="text-xl text-white/90 mt-2">
-              {author.role_or_title}
-            </p>
+
+          {/* Active Filters Display */}
+          {(categoryFilter !== "all" || pricingFilter !== "all" || difficultyFilter !== "all" || searchQuery) && (
+            <div className="flex items-center gap-2 mt-4">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
+              {searchQuery && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="h-7"
+                >
+                  Search: "{searchQuery}"
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
+              {categoryFilter !== "all" && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCategoryFilter("all")}
+                  className="h-7"
+                >
+                  {categoryFilter}
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
+              {pricingFilter !== "all" && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPricingFilter("all")}
+                  className="h-7"
+                >
+                  {pricingFilter}
+                  <span className="ml-1">×</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setCategoryFilter("all");
+                  setPricingFilter("all");
+                  setDifficultyFilter("all");
+                }}
+                className="h-7 text-red-600 hover:text-red-700"
+              >
+                Clear All
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
-        {/* Author Profile Card */}
-        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-2xl mb-8">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Profile Image */}
-              <div className="flex-shrink-0">
-                {author.profile_image ? (
-                  <div className="w-32 h-32 rounded-full overflow-hidden shadow-xl border-4 border-white dark:border-gray-800 group-hover:shadow-2xl transition-shadow">
-                    <img
-                      src={author.profile_image}
-                      alt={author.author_name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-xl border-4 border-white dark:border-gray-800">
-                    <span className="text-5xl font-bold text-white">
-                      {author.author_name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Profile Info */}
-              <div className="flex-1">
-                {/* Bio */}
-                {author.bio && (
-                  <p className="text-lg text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                    {author.bio}
-                  </p>
-                )}
-
-                {/* Location */}
-                {author.location && (
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
-                    <MapPin className="w-4 h-4" />
-                    <span>{author.location}</span>
-                  </div>
-                )}
-
-                {/* Social Links */}
-                {socialLinks.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-3 mb-6">
-                    {socialLinks.map((link, index) => (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 ${link.color} transition-all hover:scale-110`}
-                        title={link.label}
-                      >
-                        <link.icon className="w-5 h-5" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl">
-                    <div className="flex items-center justify-center mb-2">
-                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {stats.totalPosts}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Articles
-                    </div>
-                  </div>
-
-                  <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-xl">
-                    <div className="flex items-center justify-center mb-2">
-                      <Eye className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {stats.totalViews.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Total Views
-                    </div>
-                  </div>
-
-                  <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl">
-                    <div className="flex items-center justify-center mb-2">
-                      <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {stats.avgReadTime}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Avg. Read Time
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Articles Section */}
-        <div className="pb-16">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Articles by {author.author_name}
-              </h2>
+      {/* Tools Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array(6).fill(0).map((_, i) => (
+              <div key={i} className="h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : sortedTools.length > 0 ? (
+          <>
+            <div className="flex items-center justify-between mb-8">
               <p className="text-gray-600 dark:text-gray-400">
-                {stats.totalPosts} article{stats.totalPosts !== 1 ? 's' : ''} published
+                Showing <span className="font-semibold text-gray-900 dark:text-white">{sortedTools.length}</span> tool{sortedTools.length !== 1 ? 's' : ''}
               </p>
             </div>
-
-            {/* Sort Dropdown */}
-            {allPosts.length > 1 && (
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {/* Articles Grid */}
-          {allPosts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {allPosts.map((post) => (
-                <BlogCard key={post.id} post={post} />
+              {sortedTools.map((tool) => (
+                <ToolCard key={tool.id} tool={tool} />
               ))}
             </div>
-          ) : (
-            <Card className="bg-white dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700">
-              <CardContent className="p-12 text-center">
-                <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No articles yet
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  This author hasn't published any articles yet. Check back soon!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="text-center py-20">
+            <Filter className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+              No tools found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Try adjusting your filters or search query
+            </p>
+            <Button
+              onClick={() => {
+                setSearchQuery("");
+                setCategoryFilter("all");
+                setPricingFilter("all");
+                setDifficultyFilter("all");
+              }}
+              variant="outline"
+            >
+              Clear Filters
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

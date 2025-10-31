@@ -1,0 +1,338 @@
+{
+  "name": "AITool",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the AI tool (used for both languages if no translation)"
+    },
+    "name_en": {
+      "type": "string",
+      "description": "Tool name in English"
+    },
+    "name_ka": {
+      "type": "string",
+      "description": "Tool name in Georgian"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description (fallback)"
+    },
+    "description_en": {
+      "type": "string",
+      "description": "Short description in English"
+    },
+    "description_ka": {
+      "type": "string",
+      "description": "Short description in Georgian"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Writing",
+        "Design",
+        "Presentation",
+        "Productivity",
+        "Image Generation",
+        "Video Editing",
+        "Code Assistant",
+        "Voice & Audio",
+        "Research",
+        "Marketing",
+        "Data Analysis",
+        "Other"
+      ],
+      "description": "Tool category"
+    },
+    "category_en": {
+      "type": "string",
+      "description": "Category in English"
+    },
+    "category_ka": {
+      "type": "string",
+      "description": "Category in Georgian"
+    },
+    "pricing": {
+      "type": "string",
+      "enum": [
+        "Free",
+        "Freemium",
+        "Paid",
+        "Enterprise"
+      ],
+      "description": "Pricing model"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ],
+      "description": "Difficulty level"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Tool rating out of 5"
+    },
+    "editor_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Editor's score out of 10"
+    },
+    "users": {
+      "type": "string",
+      "description": "Number of users (e.g., '1M+', '500K+')"
+    },
+    "key_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of key features (English)"
+    },
+    "key_features_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key features in English"
+    },
+    "key_features_ka": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key features in Georgian"
+    },
+    "overview": {
+      "type": "string",
+      "description": "Detailed overview (fallback)"
+    },
+    "overview_en": {
+      "type": "string",
+      "description": "Detailed overview in English"
+    },
+    "overview_ka": {
+      "type": "string",
+      "description": "Detailed overview in Georgian"
+    },
+    "usage_guide": {
+      "type": "string",
+      "description": "Step-by-step usage instructions (fallback)"
+    },
+    "usage_guide_en": {
+      "type": "string",
+      "description": "Usage guide in English"
+    },
+    "usage_guide_ka": {
+      "type": "string",
+      "description": "Usage guide in Georgian"
+    },
+    "filter_categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Filter identifier (e.g., 'text-to-image')"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label (e.g., 'Text \u2192 Image')"
+          },
+          "color": {
+            "type": "string",
+            "description": "Color theme for the filter button"
+          }
+        }
+      },
+      "description": "Custom filter categories for use cases"
+    },
+    "use_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Use case title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description"
+          },
+          "type": {
+            "type": "string",
+            "description": "Case type matching filter category name"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Example prompt"
+          },
+          "result": {
+            "type": "string",
+            "description": "Expected result or output"
+          },
+          "input_image_url": {
+            "type": "string",
+            "description": "Input image (before processing)"
+          },
+          "output_image_url": {
+            "type": "string",
+            "description": "Output image (after processing)"
+          },
+          "input_video_url": {
+            "type": "string",
+            "description": "Input video URL (uploaded or external link - YouTube, Vimeo)"
+          },
+          "output_video_url": {
+            "type": "string",
+            "description": "Output video URL (uploaded or external link)"
+          },
+          "input_audio_url": {
+            "type": "string",
+            "description": "Input audio URL (uploaded MP3, WAV or external link)"
+          },
+          "output_audio_url": {
+            "type": "string",
+            "description": "Output audio URL (uploaded or external link)"
+          }
+        }
+      },
+      "description": "Real-world use case examples"
+    },
+    "prompt_tips": {
+      "type": "string",
+      "description": "Tips for effective prompts (fallback)"
+    },
+    "prompt_tips_en": {
+      "type": "string",
+      "description": "Prompt tips in English"
+    },
+    "prompt_tips_ka": {
+      "type": "string",
+      "description": "Prompt tips in Georgian"
+    },
+    "prompt_builder_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Block name (e.g., 'Objective', 'Style', 'Tone')"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "dropdown",
+              "textarea"
+            ],
+            "description": "Input type"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Dropdown options if type is dropdown"
+          },
+          "placeholder": {
+            "type": "string",
+            "description": "Placeholder text"
+          }
+        }
+      },
+      "description": "Prompt builder configuration blocks"
+    },
+    "pros": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Advantages of the tool (English)"
+    },
+    "pros_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Advantages in English"
+    },
+    "pros_ka": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Advantages in Georgian"
+    },
+    "cons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Disadvantages of the tool (English)"
+    },
+    "cons_en": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Disadvantages in English"
+    },
+    "cons_ka": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Disadvantages in Georgian"
+    },
+    "review": {
+      "type": "string",
+      "description": "Editorial review (fallback)"
+    },
+    "review_en": {
+      "type": "string",
+      "description": "Editorial review in English"
+    },
+    "review_ka": {
+      "type": "string",
+      "description": "Editorial review in Georgian"
+    },
+    "website_url": {
+      "type": "string",
+      "description": "Official website URL"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "Tool logo image URL (square, minimum 200x200px)"
+    },
+    "featured_image": {
+      "type": "string",
+      "description": "Tool screenshot or banner image URL"
+    },
+    "brand_color": {
+      "type": "string",
+      "description": "Brand color for UI theming (e.g., #FFD700 for yellow)"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to feature on homepage"
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "category",
+    "pricing",
+    "difficulty",
+    "rating"
+  ]
+}

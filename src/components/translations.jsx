@@ -96,6 +96,7 @@ export const translations = {
   'Rating': { en: 'Rating', ka: 'რეიტინგი' },
   'Reviewed': { en: 'AI Tools Reviewed', ka: 'AI ხელსაწყოების მიმოხილვა' },
   'Readers': { en: 'Active Readers', ka: 'აქტიური მკითხველები' },
+  'Updates': { en: 'Monthly Updates', ka: 'ყოველთვიური განახლებები' },
   
   // CTA
   'exploreTools': { en: 'Explore AI Tools', ka: 'გამოიკვლიეთ AI ხელსაწყოები' },

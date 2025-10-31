@@ -1,5 +1,7 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -23,14 +25,8 @@ export default function AIToolDetail() {
   const { data: tool, isLoading } = useQuery({
     queryKey: ['tool', toolId],
     queryFn: async () => {
-      try {
-        const response = await fetch(`/api/tools/${toolId}`);
-        if (!response.ok) throw new Error("Failed to fetch tool");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching tool:", error);
-        return null;
-      }
+      const tools = await base44.entities.AITool.filter({ id: toolId });
+      return tools[0];
     },
     enabled: !!toolId,
   });

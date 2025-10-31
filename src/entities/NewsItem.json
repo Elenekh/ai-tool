@@ -1,0 +1,54 @@
+{
+  "name": "NewsItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "News headline"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full news content"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Product Launch",
+        "Feature Update",
+        "Industry News",
+        "Company Announcement",
+        "Research",
+        "Events"
+      ],
+      "description": "News category"
+    },
+    "source": {
+      "type": "string",
+      "description": "News source"
+    },
+    "external_url": {
+      "type": "string",
+      "description": "Link to original article"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "News image URL"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Related tags"
+    }
+  },
+  "required": [
+    "title",
+    "summary",
+    "category"
+  ]
+}
