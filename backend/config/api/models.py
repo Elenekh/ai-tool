@@ -15,11 +15,50 @@ class Tool(models.Model):
         ('Intermediate', 'Intermediate'),
         ('Advanced', 'Advanced'),
     ]
+
+    # ✅ NEW: CATEGORY CHOICES
+    CATEGORY_CHOICES = [
+        ('Writing', 'Writing Tools'),
+        ('Design', 'Design & Graphics'),
+        ('Presentation', 'Presentation Tools'),
+        ('Productivity', 'Productivity & Organization'),
+        ('Image Generation', 'Image Generation'),
+        ('Video Editing', 'Video Editing'),
+        ('Code Assistant', 'Code Assistant'),
+        ('Voice & Audio', 'Voice & Audio'),
+        ('Research', 'Research & Analysis'),
+        ('Marketing', 'Marketing & Social Media'),
+        ('Data Analysis', 'Data Analysis'),
+        ('Education', 'Education & Learning'),
+        ('Business', 'Business & Finance'),
+        ('Music & Audio', 'Music & Audio'),
+        ('3D & Animation', '3D & Animation'),
+        ('Translation', 'Translation & Localization'),
+        ('Customer Service', 'Customer Service'),
+        ('Content Creation', 'Content Creation'),
+        ('Other', 'Other'),
+    ]
+    
+    TYPE_CHOICES = [
+        ('text-to-image', 'Text to Image'),
+        ('text-to-video', 'Text to Video'),
+        ('text-to-audio', 'Text to Audio'),
+        ('image-to-image', 'Image to Image'),
+        ('image-to-video', 'Image to Video'),
+        ('video-to-video', 'Video to Video'),
+        ('audio-to-audio', 'Audio to Audio'),
+        ('text-to-text', 'Text to Text'),
+        ('other', 'Other'),
+    ]
     
     # Basic Info
     name = models.CharField(max_length=200)
     description = models.TextField()
-    category = models.CharField(max_length=100)
+    category = models.CharField(
+        max_length=100, 
+        choices=CATEGORY_CHOICES,  # ✅ NOW HAS CHOICES
+        help_text="Select the primary category for this AI tool"
+    )
     
     # Images & Branding
     logo_url = models.URLField(blank=True, null=True)
@@ -37,6 +76,56 @@ class Tool(models.Model):
     key_features = models.JSONField(default=list, blank=True)
     pros = models.JSONField(default=list, blank=True)
     cons = models.JSONField(default=list, blank=True)
+    
+    # AI Tool Demo Fields
+    type = models.CharField(
+        max_length=100, 
+        choices=TYPE_CHOICES,
+        blank=True,
+        help_text="Type of AI tool (e.g., text-to-image, image-to-image)"
+    )
+    prompt = models.TextField(
+        blank=True,
+        help_text="Example prompt to demonstrate how the tool works"
+    )
+    result = models.TextField(
+        blank=True,
+        help_text="Description of the expected output or result"
+    )
+    
+    # Input Media URLs (can be null for generative AI)
+    input_image_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of input image (before processing)"
+    )
+    input_video_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of input video (uploaded or external link)"
+    )
+    input_audio_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of input audio file"
+    )
+    
+    # Output Media URLs
+    output_image_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of output image (after processing)"
+    )
+    output_video_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of output video (after processing)"
+    )
+    output_audio_url = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="URL of output audio file"
+    )
     
     # Additional Info
     website_url = models.URLField(blank=True, null=True)
