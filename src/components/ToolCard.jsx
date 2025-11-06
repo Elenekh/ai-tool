@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Star, ArrowRight, Sparkles } from "lucide-react";
 
 export default function ToolCard({ tool }) {
+  // Safety check - if tool is undefined, don't render
+  if (!tool || !tool.id) {
+    return null;
+  }
+
   const renderStars = (rating) => {
     return Array(5).fill(0).map((_, i) => (
       <Star
@@ -32,6 +37,25 @@ export default function ToolCard({ tool }) {
     Intermediate: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
     Advanced: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
   };
+
+  // Helper to safely extract key features as array
+  const getKeyFeatures = () => {
+    if (!tool.key_features) return [];
+    
+    // If it's already an array of strings, return it
+    if (Array.isArray(tool.key_features)) {
+      return tool.key_features.filter(f => typeof f === 'string');
+    }
+    
+    // If it's an object with a 'feature' key, extract that
+    if (typeof tool.key_features === 'object' && tool.key_features.feature) {
+      return [tool.key_features.feature];
+    }
+    
+    return [];
+  };
+
+  const features = getKeyFeatures();
 
   return (
     <Card className="card-hover bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 overflow-hidden group">
@@ -87,13 +111,13 @@ export default function ToolCard({ tool }) {
         </div>
 
         {/* Key Features */}
-        {tool.key_features && tool.key_features.length > 0 && (
+        {features.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Key Features:
             </p>
             <ul className="space-y-1">
-              {tool.key_features.slice(0, 3).map((feature, index) => (
+              {features.slice(0, 3).map((feature, index) => (
                 <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
                   <span className="text-indigo-500 mt-1">•</span>
                   <span className="line-clamp-1">{feature}</span>

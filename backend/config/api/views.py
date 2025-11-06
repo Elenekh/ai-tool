@@ -8,25 +8,65 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
-from .models import Tool, BlogPost, News, Author
-from .serializers import ToolSerializer, BlogPostSerializer, NewsSerializer, AuthorSerializer
+from .models import (
+    Tool, KeyFeature, Pro, Con, UsageStep,
+    BlogPost, News, Author
+)
+from .serializers import (
+    ToolSerializer, KeyFeatureSerializer,
+    ProSerializer, ConSerializer, UsageStepSerializer,
+    BlogPostSerializer, NewsSerializer, AuthorSerializer
+)
 from .permissions import IsAdminOrReadOnly, IsAuthorOrAdmin
 
 
-# ----------------------- Tool ViewSet -----------------------
+# ==================== TOOL VIEWSETS ====================
+
 class ToolViewSet(viewsets.ModelViewSet):
     queryset = Tool.objects.all()
     serializer_class = ToolSerializer
-    permission_classes = [IsAdminOrReadOnly]  # Only admins can create/update/delete
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['category', 'pricing', 'difficulty', 'is_featured']
+    filterset_fields = ['category', 'pricing', 'difficulty', 'type']
     search_fields = ['name', 'description', 'category']
     ordering_fields = ['created_at', 'rating', 'name']
     ordering = ['-created_at']
-    pagination_class = None  # Disable pagination or use default
 
 
-# ----------------------- BlogPost ViewSet -----------------------
+class KeyFeatureViewSet(viewsets.ModelViewSet):
+    queryset = KeyFeature.objects.all()
+    serializer_class = KeyFeatureSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['tool']
+
+
+class ProViewSet(viewsets.ModelViewSet):
+    queryset = Pro.objects.all()
+    serializer_class = ProSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['tool']
+
+
+class ConViewSet(viewsets.ModelViewSet):
+    queryset = Con.objects.all()
+    serializer_class = ConSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['tool']
+
+
+class UsageStepViewSet(viewsets.ModelViewSet):
+    queryset = UsageStep.objects.all()
+    serializer_class = UsageStepSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['tool']
+
+
+# ==================== BLOG POST VIEWSETS ====================
+
 class BlogPostViewSet(viewsets.ModelViewSet):
     queryset = BlogPost.objects.filter(published=True)
     serializer_class = BlogPostSerializer
@@ -38,11 +78,10 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_permissions(self):
-        # Apply custom permission for unsafe methods
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthorOrAdmin()]
         elif self.action == 'increment_views':
-            return [AllowAny()]  # Anyone can increment views
+            return [AllowAny()]
         return super().get_permissions()
 
     @action(detail=True, methods=['post'])
@@ -55,11 +94,12 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-# ----------------------- News ViewSet -----------------------
+# ==================== NEWS VIEWSETS ====================
+
 class NewsViewSet(viewsets.ModelViewSet):
     queryset = News.objects.filter(published=True)
     serializer_class = NewsSerializer
-    permission_classes = [IsAdminOrReadOnly]  # Only admins can modify news
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'published']
     search_fields = ['title', 'summary', 'source', 'tags']
@@ -67,11 +107,12 @@ class NewsViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
 
-# ----------------------- Author ViewSet -----------------------
+# ==================== AUTHOR VIEWSETS ====================
+
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
-    permission_classes = [IsAdminOrReadOnly]  # Only admins can modify author info
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'bio']
     ordering_fields = ['name', 'created_at']
@@ -97,10 +138,11 @@ class AuthorViewSet(viewsets.ModelViewSet):
             )
 
 
-# ----------------------- Custom Login Endpoint -----------------------
+# ==================== CUSTOM LOGIN ENDPOINT ====================
+
 class LoginView(APIView):
     """Custom login endpoint"""
-    permission_classes = []  # Public endpoint
+    permission_classes = []
 
     def post(self, request):
         username = request.data.get('username')

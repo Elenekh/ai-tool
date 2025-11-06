@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTool } from "@/hooks/useAPI";
 import { useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -15,13 +15,22 @@ import ReactMarkdown from "react-markdown";
 import PromptBuilder from "../components/tool-detail/PromptBuilder";
 import UseCasesList from "../components/tool-detail/UseCasesList";
 import ReviewSection from "../components/tool-detail/ReviewSection";
+import SmartDemoSection from "../components/tool-detail/SmartDemoSection"; // NEW IMPORT
 
 export default function AIToolDetail() {
   const [searchParams] = useSearchParams();
   const toolId = searchParams.get('id');
+  const [hasViewed, setHasViewed] = useState(false);
 
-  // Fetch tool data from API
   const { data: tool, isLoading, error } = useTool(toolId);
+
+  // Handle demo view tracking
+  useEffect(() => {
+    if (tool && !hasViewed) {
+      setHasViewed(true);
+      // Could add view tracking here if needed
+    }
+  }, [tool, hasViewed]);
 
   if (isLoading) {
     return (
@@ -61,6 +70,23 @@ export default function AIToolDetail() {
         }`}
       />
     ));
+  };
+
+  // Helper to safely extract key features as array
+  const getKeyFeatures = () => {
+    if (!tool.key_features) return [];
+    
+    // If it's already an array of strings, return it
+    if (Array.isArray(tool.key_features)) {
+      return tool.key_features.filter(f => typeof f === 'string');
+    }
+    
+    // If it's an object with a 'feature' key, extract that
+    if (typeof tool.key_features === 'object' && tool.key_features.feature) {
+      return [tool.key_features.feature];
+    }
+    
+    return [];
   };
 
   const infoCards = [
@@ -168,6 +194,9 @@ export default function AIToolDetail() {
           ))}
         </div>
 
+        {/* SMART DEMO SECTION - Displays based on tool.type */}
+        <SmartDemoSection tool={tool} />
+
         {/* Tabbed Content */}
         <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-xl">
           <CardContent className="p-0">
@@ -235,7 +264,7 @@ export default function AIToolDetail() {
                           Key Features
                         </h3>
                         <div className="grid md:grid-cols-2 gap-4">
-                          {tool.key_features.map((feature, index) => (
+                          {getKeyFeatures().map((feature, index) => (
                             <Card key={index} className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border-indigo-200 dark:border-indigo-800">
                               <CardContent className="p-4 flex items-start gap-3">
                                 <span 

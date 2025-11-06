@@ -38,14 +38,24 @@ export default function AITools() {
   }, [categoryFilter, pricingFilter, difficultyFilter, sortBy, searchQuery]);
 
   // Fetch tools from API
-  const { data: tools = [], isLoading } = useTools(apiParams);
+  const { data: toolsData = [], isLoading } = useTools(apiParams);
+
+  // Normalize tools data - handle both array and paginated response
+  const tools = useMemo(() => {
+    if (!toolsData) return [];
+    if (Array.isArray(toolsData)) return toolsData;
+    if (toolsData.results && Array.isArray(toolsData.results)) return toolsData.results;
+    return [];
+  }, [toolsData]);
 
   // Client-side filtering (since API doesn't support full-text search on all fields)
   const filteredTools = useMemo(() => {
     return tools.filter(tool => {
+      if (!tool || !tool.id) return false; // Safety check
+      
       const matchesSearch = 
-        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (tool.name && tool.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (tool.description && tool.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
       return matchesSearch;
     });
@@ -158,7 +168,7 @@ export default function AITools() {
 
           {/* Active Filters Display */}
           {hasActiveFilters && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800 flex-wrap">
               <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
               {searchQuery && (
                 <Button
@@ -233,7 +243,7 @@ export default function AITools() {
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredTools.map((tool) => (
+              {filteredTools.filter(tool => tool && tool.id).map((tool) => (
                 <ToolCard key={tool.id} tool={tool} />
               ))}
             </div>

@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+# ==================== TOOL MODELS ====================
+
 class Tool(models.Model):
     PRICING_CHOICES = [
         ('Free', 'Free'),
@@ -16,7 +18,6 @@ class Tool(models.Model):
         ('Advanced', 'Advanced'),
     ]
 
-    # ✅ NEW: CATEGORY CHOICES
     CATEGORY_CHOICES = [
         ('Writing', 'Writing Tools'),
         ('Design', 'Design & Graphics'),
@@ -40,113 +41,145 @@ class Tool(models.Model):
     ]
     
     TYPE_CHOICES = [
+        ('text-to-text', 'Text to Text'),
         ('text-to-image', 'Text to Image'),
         ('text-to-video', 'Text to Video'),
         ('text-to-audio', 'Text to Audio'),
         ('image-to-image', 'Image to Image'),
         ('image-to-video', 'Image to Video'),
-        ('video-to-video', 'Video to Video'),
-        ('audio-to-audio', 'Audio to Audio'),
-        ('text-to-text', 'Text to Text'),
         ('other', 'Other'),
     ]
     
     # Basic Info
     name = models.CharField(max_length=200)
     description = models.TextField()
-    category = models.CharField(
-        max_length=100, 
-        choices=CATEGORY_CHOICES,  # ✅ NOW HAS CHOICES
-        help_text="Select the primary category for this AI tool"
-    )
-    
-    # Images & Branding
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     logo_url = models.URLField(blank=True, null=True)
     featured_image = models.ImageField(upload_to='tools/', blank=True, null=True)
-    brand_color = models.CharField(max_length=7, blank=True, default='#667eea')
-    
+
     # Details
     pricing = models.CharField(max_length=50, choices=PRICING_CHOICES)
     difficulty = models.CharField(max_length=50, choices=DIFFICULTY_CHOICES)
     rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
-    
+    website_url = models.URLField(blank=True, null=True)
+
     # Content
     overview = models.TextField(blank=True)
-    usage_guide = models.TextField(blank=True)
-    key_features = models.JSONField(default=list, blank=True)
-    pros = models.JSONField(default=list, blank=True)
-    cons = models.JSONField(default=list, blank=True)
+    usage_guide = models.TextField(blank=True, help_text="Add overall usage instructions")
+
+    # AI Tool Type (determines what fields are used)
+    type = models.CharField(max_length=100, choices=TYPE_CHOICES)
+
+    # ==================== DEMO/EXAMPLE FIELDS ====================
     
-    # AI Tool Demo Fields
-    type = models.CharField(
-        max_length=100, 
-        choices=TYPE_CHOICES,
-        blank=True,
-        help_text="Type of AI tool (e.g., text-to-image, image-to-image)"
-    )
-    prompt = models.TextField(
-        blank=True,
-        help_text="Example prompt to demonstrate how the tool works"
-    )
-    result = models.TextField(
-        blank=True,
-        help_text="Description of the expected output or result"
+    # Input Fields
+    prompt = models.TextField(blank=True, help_text="Example text input/prompt for this tool")
+    prompt_image = models.ImageField(
+        upload_to='tool_prompts/', 
+        blank=True, 
+        null=True, 
+        help_text="Example input image (for image-to-image, image-to-video)"
     )
     
-    # Input Media URLs (can be null for generative AI)
-    input_image_url = models.URLField(
+    # Output Fields - Text
+    result_text = models.TextField(
         blank=True, 
-        null=True,
-        help_text="URL of input image (before processing)"
-    )
-    input_video_url = models.URLField(
-        blank=True, 
-        null=True,
-        help_text="URL of input video (uploaded or external link)"
-    )
-    input_audio_url = models.URLField(
-        blank=True, 
-        null=True,
-        help_text="URL of input audio file"
+        null=True, 
+        help_text="Example text output"
     )
     
-    # Output Media URLs
-    output_image_url = models.URLField(
+    # Output Fields - Image
+    result_image = models.ImageField(
+        upload_to='tool_results/', 
         blank=True, 
-        null=True,
-        help_text="URL of output image (after processing)"
-    )
-    output_video_url = models.URLField(
-        blank=True, 
-        null=True,
-        help_text="URL of output video (after processing)"
-    )
-    output_audio_url = models.URLField(
-        blank=True, 
-        null=True,
-        help_text="URL of output audio file"
+        null=True, 
+        help_text="Example image output"
     )
     
-    # Additional Info
-    website_url = models.URLField(blank=True, null=True)
-    editor_score = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
-    review = models.TextField(blank=True)
-    users = models.CharField(max_length=100, blank=True)
-    is_featured = models.BooleanField(default=False)
-    use_cases = models.JSONField(default=list, blank=True)
+    # Output Fields - Video URL
+    result_video_url = models.URLField(
+        blank=True, 
+        null=True, 
+        help_text="Example video output URL (YouTube, Vimeo, direct MP4, etc.)"
+    )
     
+    # Output Fields - Audio URL
+    result_audio_url = models.URLField(
+        blank=True, 
+        null=True, 
+        help_text="Example audio output URL (SoundCloud, direct MP3, etc.)"
+    )
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'AI Tool'
         verbose_name_plural = 'AI Tools'
-    
+
     def __str__(self):
         return self.name
 
+
+# ==================== KEY FEATURES (INLINE) ====================
+
+class KeyFeature(models.Model):
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='key_features')
+    feature = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "Key Feature"
+        verbose_name_plural = "Key Features"
+
+    def __str__(self):
+        return self.feature
+
+
+# ==================== PROS (INLINE) ====================
+
+class Pro(models.Model):
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='pros')
+    text = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "Pro"
+        verbose_name_plural = "Pros"
+
+    def __str__(self):
+        return self.text
+
+
+# ==================== CONS (INLINE) ====================
+
+class Con(models.Model):
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='cons')
+    text = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "Con"
+        verbose_name_plural = "Cons"
+
+    def __str__(self):
+        return self.text
+
+
+# ==================== USAGE STEPS (INLINE) ====================
+
+class UsageStep(models.Model):
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='usage_steps')
+    step = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "Usage Step"
+        verbose_name_plural = "Usage Steps"
+
+    def __str__(self):
+        return self.step
+
+
+# ==================== BLOG POST MODELS ====================
 
 class BlogPost(models.Model):
     CATEGORY_CHOICES = [
@@ -159,28 +192,22 @@ class BlogPost(models.Model):
         ('Education', 'Education'),
     ]
     
-    # Basic Info
     title = models.CharField(max_length=300)
     excerpt = models.TextField(max_length=500, blank=True)
     content = models.TextField()
     
-    # Author Info
     author = models.CharField(max_length=200)
     author_avatar = models.URLField(blank=True, null=True)
     author_bio = models.TextField(blank=True)
     
-    # Metadata
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     tags = models.JSONField(default=list, blank=True)
     
-    # Images
     featured_image = models.ImageField(upload_to='blog/', blank=True, null=True)
     
-    # Analytics
     views = models.IntegerField(default=0)
     read_time = models.IntegerField(blank=True, null=True, help_text='Reading time in minutes')
     
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     published = models.BooleanField(default=True)
@@ -193,6 +220,8 @@ class BlogPost(models.Model):
     def __str__(self):
         return self.title
 
+
+# ==================== NEWS MODELS ====================
 
 class News(models.Model):
     CATEGORY_CHOICES = [
@@ -224,6 +253,8 @@ class News(models.Model):
         return self.title
 
 
+# ==================== AUTHOR MODELS ====================
+
 class Author(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
@@ -231,7 +262,6 @@ class Author(models.Model):
     profile_image = models.ImageField(upload_to='authors/', blank=True, null=True)
     location = models.CharField(max_length=200, blank=True)
     
-    # Social Links
     linkedin_url = models.URLField(blank=True, null=True)
     twitter_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)

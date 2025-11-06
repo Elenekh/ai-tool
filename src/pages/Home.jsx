@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   useTools, 
   useBlogPosts, 
@@ -18,22 +18,39 @@ export default function Home() {
   const { t } = useLanguage();
   
   // Fetch featured tools
-  const { data: allTools = [], isLoading: toolsLoading } = useTools({
+  const { data: toolsData = [], isLoading: toolsLoading } = useTools({
     is_featured: true,
     ordering: '-created_at',
   });
   
+  // Helper function to safely extract array from data
+  const extractArray = (data) => {
+    console.log('Raw data:', data); // Debug log
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data.results && Array.isArray(data.results)) return data.results;
+    return [];
+  };
+
+  // Normalize tools data - handle both array and paginated response
+  const allTools = useMemo(() => extractArray(toolsData), [toolsData]);
   const featuredTools = allTools.slice(0, 3);
 
   // Fetch recent blog posts
-  const { data: recentPosts = [], isLoading: postsLoading } = useBlogPosts({
+  const { data: postsData = [], isLoading: postsLoading } = useBlogPosts({
     ordering: '-created_at',
   });
 
+  // Normalize blog posts data
+  const recentPosts = useMemo(() => extractArray(postsData), [postsData]);
+
   // Fetch recent news
-  const { data: recentNews = [], isLoading: newsLoading } = useNews({
+  const { data: newsData = [], isLoading: newsLoading } = useNews({
     ordering: '-created_at',
   });
+
+  // Normalize news data
+  const recentNews = useMemo(() => extractArray(newsData), [newsData]);
 
   return (
     <div className="bg-gray-50 dark:bg-gray-950">
@@ -126,7 +143,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredTools.map((tool) => (
+            {featuredTools.filter(tool => tool && tool.id).map((tool) => (
               <ToolCard key={tool.id} tool={tool} />
             ))}
           </div>

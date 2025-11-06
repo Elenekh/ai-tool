@@ -1,0 +1,236 @@
+/**
+ * Django Admin Custom Styling for AI Tool Admin
+ * File: backend/static/admin/css/tool_admin.css
+ */
+
+/* Type Indicator Badge */
+.type-indicator {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.type-indicator .badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+
+.badge-text-to-text {
+    background-color: #417690;
+}
+
+.badge-text-to-image {
+    background-color: #6f42c1;
+}
+
+.badge-text-to-video {
+    background-color: #e83e8c;
+}
+
+.badge-text-to-audio {
+    background-color: #fd7e14;
+}
+
+.badge-image-to-image {
+    background-color: #20c997;
+}
+
+.badge-other {
+    background-color: #6c757d;
+}
+
+/* Inline Groups Styling */
+.inline-group {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.inline-group.active-section {
+    background-color: #e7f3ff;
+    border-color: #417690;
+    box-shadow: 0 2px 8px rgba(65, 118, 144, 0.15);
+}
+
+.inline-group h2 {
+    color: #333;
+    font-size: 16px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dee2e6;
+    transition: border-color 0.3s ease;
+}
+
+.inline-group.active-section h2 {
+    border-bottom-color: #417690;
+    color: #417690;
+}
+
+/* Inline Form Row Styling */
+.inline-related .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+    align-items: flex-start;
+}
+
+.inline-related .form-row:last-child {
+    border-bottom: none;
+}
+
+.inline-related .form-row label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.inline-related .form-row input[type="text"],
+.inline-related .form-row textarea,
+.inline-related .form-row input[type="file"] {
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 13px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inline-related .form-row input[type="text"]:focus,
+.inline-related .form-row textarea:focus,
+.inline-related .form-row input[type="file"]:focus {
+    border-color: #417690;
+    box-shadow: 0 0 0 3px rgba(65, 118, 144, 0.1);
+    outline: none;
+}
+
+.inline-related .form-row textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Delete Icon Styling */
+.inline-related .dynamic-form .delete {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #dc3545;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.inline-related .dynamic-form .delete:hover {
+    opacity: 0.7;
+}
+
+.inline-related .dynamic-form .delete input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Empty Form (template for new items) */
+.inline-related .empty-form {
+    background-color: #fff3cd;
+    border: 1px dashed #ffc107;
+    border-radius: 3px;
+    padding: 10px;
+    display: none;
+}
+
+/* Add Another Button */
+.add-row a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.add-row a:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.add-row a::before {
+    content: '+';
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Tool Example Inline Specific */
+.inline-related[id*="toolexample"] .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.inline-related[id*="toolexample"] .form-row[id*="prompt"] {
+    grid-column: 1 / -1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .inline-group {
+        padding: 10px;
+    }
+
+    .inline-related .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .inline-related .form-row input,
+    .inline-related .form-row textarea,
+    .inline-related .form-row select {
+        width: 100%;
+    }
+}
+
+/* Smooth Transitions */
+.inline-group,
+.inline-related .form-row,
+.add-row a {
+    transition: all 0.3s ease;
+}
+
+/* Hidden Section */
+.inline-group[style*="display: none"] {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+/* Accessibility */
+.inline-group:focus-within {
+    border-color: #417690;
+}
+
+/* Print Styles */
+@media print {
+    .add-row,
+    .inline-related .delete {
+        display: none;
+    }
+}
