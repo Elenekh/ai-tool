@@ -19,7 +19,6 @@ export default function BlogPost() {
   const [readingProgress, setReadingProgress] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Redirect to Blog if no postId
   if (!postId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -33,21 +32,14 @@ export default function BlogPost() {
     );
   }
 
-  // Fetch post
   const { data: post, isLoading, error } = useBlogPost(postId);
-
-  // Fetch all posts for related posts
   const { data: allPostsData } = useBlogPosts({ ordering: '-created_at' });
   const allPosts = allPostsData?.results || [];
-
-  // Increment views
   const incrementViewsMutation = useIncrementBlogViews();
 
   useEffect(() => {
     if (post && postId) {
       const viewedPosts = JSON.parse(localStorage.getItem("viewedPosts") || "[]");
-
-      // Only increment if not already viewed
       if (!viewedPosts.includes(postId)) {
         incrementViewsMutation.mutate(postId, {
           onSuccess: () => {
@@ -59,11 +51,8 @@ export default function BlogPost() {
     }
   }, [post, postId, incrementViewsMutation]);
 
-
-  // Related posts
   const relatedPosts = allPosts.filter(p => p.id !== postId && p.category === post?.category).slice(0, 3);
 
-  // Reading progress
   useEffect(() => {
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
@@ -132,7 +121,7 @@ export default function BlogPost() {
   const authorSlug = post.author.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50">
         <div className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 transition-all duration-150" style={{ width: `${readingProgress}%` }} />
@@ -143,11 +132,10 @@ export default function BlogPost() {
         {post.featured_image && (
           <>
             <img src={post.featured_image} alt={post.title} className="w-full h-full object-cover opacity-40" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-gray-50 dark:to-gray-950"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-white dark:to-gray-950"></div>
           </>
         )}
 
-        {/* Back */}
         <div className="absolute top-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link to={createPageUrl("Blog")}>
             <Button variant="ghost" className="text-white hover:bg-white/20 -ml-2">
@@ -156,7 +144,6 @@ export default function BlogPost() {
           </Link>
         </div>
 
-        {/* Title & Meta */}
         <div className="absolute bottom-0 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {post.category && <Badge className={`${categoryColors[post.category]} mb-4`}>{post.category}</Badge>}
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">{post.title}</h1>
@@ -179,22 +166,54 @@ export default function BlogPost() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 prose dark:prose-invert">
-        <ReactMarkdown>{post.content}</ReactMarkdown>
+      <div className="max-w-2xl mx-auto px-6 md:px-8 py-20">
+        <div className="text-gray-800 dark:text-gray-100">
+          <ReactMarkdown
+            components={{
+              h1: ({node, ...props}) => <h1 className="text-4xl font-bold mt-10 mb-6 text-gray-900 dark:text-white" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-3xl font-bold mt-8 mb-5 text-gray-900 dark:text-white" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-2xl font-bold mt-6 mb-4 text-gray-900 dark:text-white" {...props} />,
+              h4: ({node, ...props}) => <h4 className="text-xl font-bold mt-5 mb-3 text-gray-900 dark:text-white" {...props} />,
+              p: ({node, ...props}) => <p className="text-base md:text-lg leading-relaxed mb-6 text-gray-700 dark:text-gray-300" {...props} />,
+              a: ({node, ...props}) => <a className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline" {...props} />,
+              strong: ({node, ...props}) => <strong className="font-bold text-gray-900 dark:text-white" {...props} />,
+              em: ({node, ...props}) => <em className="italic text-gray-700 dark:text-gray-300" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-3 my-6 text-gray-700 dark:text-gray-300" {...props} />,
+              ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-3 my-6 text-gray-700 dark:text-gray-300" {...props} />,
+              li: ({node, ...props}) => <li className="text-base md:text-lg leading-relaxed" {...props} />,
+              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-600 dark:border-indigo-400 pl-6 italic my-8 py-4 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded" {...props} />,
+              code: ({node, inline, ...props}) => inline 
+                ? <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono text-sm text-gray-800 dark:text-gray-200" {...props} />
+                : <code className="block bg-gray-100 dark:bg-gray-900 p-4 rounded font-mono text-sm overflow-x-auto text-gray-800 dark:text-gray-200" {...props} />,
+              pre: ({node, ...props}) => <pre className="bg-gray-900 dark:bg-gray-950 p-6 rounded-lg overflow-x-auto my-6 border border-gray-800" {...props} />,
+              img: ({node, ...props}) => <img className="w-full rounded-lg shadow-lg my-8" {...props} />,
+              table: ({node, ...props}) => <table className="w-full border-collapse my-6" {...props} />,
+              thead: ({node, ...props}) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
+              th: ({node, ...props}) => <th className="border border-gray-300 dark:border-gray-700 px-4 py-3 text-left font-semibold" {...props} />,
+              td: ({node, ...props}) => <td className="border border-gray-300 dark:border-gray-700 px-4 py-3" {...props} />,
+              hr: ({node, ...props}) => <hr className="my-8 border-gray-300 dark:border-gray-700" {...props} />,
+            }}
+          >
+            {post.content}
+          </ReactMarkdown>
+        </div>
       </div>
 
       {/* Share Buttons */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex gap-4 flex-wrap">
-        <Button onClick={() => sharePost("twitter")} variant="outline" size="sm"><Twitter className="w-4 h-4 mr-1" /> Twitter</Button>
-        <Button onClick={() => sharePost("linkedin")} variant="outline" size="sm"><Linkedin className="w-4 h-4 mr-1" /> LinkedIn</Button>
-        <Button onClick={() => sharePost("facebook")} variant="outline" size="sm"><Facebook className="w-4 h-4 mr-1" /> Facebook</Button>
-        <Button onClick={copyLink} variant="outline" size="sm"><LinkIcon className="w-4 h-4 mr-1" /> Copy Link</Button>
+      <div className="max-w-2xl mx-auto px-6 md:px-8 py-8 border-t border-gray-200 dark:border-gray-800">
+        <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Share this article:</p>
+        <div className="flex gap-3 flex-wrap">
+          <Button onClick={() => sharePost("twitter")} className="bg-blue-400 hover:bg-blue-500 text-white" size="sm"><Twitter className="w-4 h-4 mr-2" /> Twitter</Button>
+          <Button onClick={() => sharePost("linkedin")} className="bg-blue-600 hover:bg-blue-700 text-white" size="sm"><Linkedin className="w-4 h-4 mr-2" /> LinkedIn</Button>
+          <Button onClick={() => sharePost("facebook")} className="bg-blue-700 hover:bg-blue-800 text-white" size="sm"><Facebook className="w-4 h-4 mr-2" /> Facebook</Button>
+          <Button onClick={copyLink} variant="outline" size="sm"><LinkIcon className="w-4 h-4 mr-2" /> Copy Link</Button>
+        </div>
       </div>
 
       {/* Related Posts */}
       {relatedPosts.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-3xl font-bold mb-6">Related Articles</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-gray-200 dark:border-gray-800">
+          <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Related Articles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {relatedPosts.map(p => (
               <BlogCard key={p.id} post={p} />

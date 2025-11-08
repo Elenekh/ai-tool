@@ -9,13 +9,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
 from .models import (
-    Tool, KeyFeature, Pro, Con, UsageStep,
-    BlogPost, News, Author
+    Tool, ToolDemo, KeyFeature, Pro, Con, UsageStep,
+    BlogPost, BlogPostImage, News, Author
 )
 from .serializers import (
-    ToolSerializer, KeyFeatureSerializer,
+    ToolSerializer, ToolDemoSerializer, KeyFeatureSerializer,
     ProSerializer, ConSerializer, UsageStepSerializer,
-    BlogPostSerializer, NewsSerializer, AuthorSerializer
+    BlogPostSerializer, BlogPostImageSerializer, NewsSerializer, AuthorSerializer
 )
 from .permissions import IsAdminOrReadOnly, IsAuthorOrAdmin
 
@@ -27,10 +27,23 @@ class ToolViewSet(viewsets.ModelViewSet):
     serializer_class = ToolSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['category', 'pricing', 'difficulty', 'type']
+    filterset_fields = ['category', 'pricing', 'difficulty']
     search_fields = ['name', 'description', 'category']
     ordering_fields = ['created_at', 'rating', 'name']
     ordering = ['-created_at']
+
+
+# ==================== TOOL DEMO VIEWSETS ====================
+
+class ToolDemoViewSet(viewsets.ModelViewSet):
+    queryset = ToolDemo.objects.all()
+    serializer_class = ToolDemoSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['tool', 'demo_type']
+    search_fields = ['title', 'description', 'tool__name']
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order', 'created_at']
 
 
 class KeyFeatureViewSet(viewsets.ModelViewSet):
@@ -92,6 +105,16 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         post.save()
         serializer = self.get_serializer(post)
         return Response(serializer.data)
+
+
+class BlogPostImageViewSet(viewsets.ModelViewSet):
+    queryset = BlogPostImage.objects.all()
+    serializer_class = BlogPostImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['blog_post']
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order', 'created_at']
 
 
 # ==================== NEWS VIEWSETS ====================

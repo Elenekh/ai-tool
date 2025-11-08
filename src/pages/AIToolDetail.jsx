@@ -9,13 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Star, ArrowLeft, ExternalLink, DollarSign, 
   Gauge, Users, Trophy, BookOpen, Lightbulb, 
-  MessageSquare, Target, Zap
+  Target, Zap, AlertCircle, Play
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import PromptBuilder from "../components/tool-detail/PromptBuilder";
-import UseCasesList from "../components/tool-detail/UseCasesList";
 import ReviewSection from "../components/tool-detail/ReviewSection";
-import SmartDemoSection from "../components/tool-detail/SmartDemoSection"; // NEW IMPORT
+import SmartDemoSection from "../components/tool-detail/SmartDemoSection";
 
 export default function AIToolDetail() {
   const [searchParams] = useSearchParams();
@@ -24,11 +22,14 @@ export default function AIToolDetail() {
 
   const { data: tool, isLoading, error } = useTool(toolId);
 
-  // Handle demo view tracking
   useEffect(() => {
     if (tool && !hasViewed) {
       setHasViewed(true);
-      // Could add view tracking here if needed
+      console.log("=== TOOL DATA ===");
+      console.log("Tool object:", tool);
+      console.log("Usage Steps:", tool.usage_steps);
+      console.log("Demos:", tool.demos);
+      console.log("Key Features:", tool.key_features);
     }
   }, [tool, hasViewed]);
 
@@ -59,6 +60,8 @@ export default function AIToolDetail() {
     );
   }
 
+  // ==================== HELPER FUNCTIONS ====================
+
   const renderStars = (rating) => {
     return Array(5).fill(0).map((_, i) => (
       <Star
@@ -72,22 +75,89 @@ export default function AIToolDetail() {
     ));
   };
 
-  // Helper to safely extract key features as array
+  // Get key features from related objects
   const getKeyFeatures = () => {
     if (!tool.key_features) return [];
     
-    // If it's already an array of strings, return it
     if (Array.isArray(tool.key_features)) {
-      return tool.key_features.filter(f => typeof f === 'string');
-    }
-    
-    // If it's an object with a 'feature' key, extract that
-    if (typeof tool.key_features === 'object' && tool.key_features.feature) {
-      return [tool.key_features.feature];
+      return tool.key_features
+        .map(kf => kf.feature || kf)
+        .filter(f => f && String(f).trim().length > 0);
     }
     
     return [];
   };
+
+  // Get usage steps from related objects
+  const getUsageSteps = () => {
+    if (!tool.usage_steps) return [];
+    
+    if (Array.isArray(tool.usage_steps)) {
+      return tool.usage_steps
+        .map(us => us.step || us)
+        .filter(s => s && String(s).trim().length > 0);
+    }
+    
+    return [];
+  };
+
+  // Get demos - all of them
+  const getDemos = () => {
+    if (!tool.demos) return [];
+    
+    if (Array.isArray(tool.demos)) {
+      return tool.demos.filter(d => d && d.title);
+    }
+    
+    return [];
+  };
+
+  // Get the first demo to pass to SmartDemoSection (FEATURED DEMO)
+  const getFirstDemo = () => {
+    const demos = getDemos();
+    if (demos.length === 0) return null;
+    
+    const firstDemo = demos[0];
+    
+    // Convert ToolDemo structure to SmartDemoSection format
+    return {
+      type: firstDemo.demo_type || 'other',
+      prompt: firstDemo.input_prompt,
+      result_text: firstDemo.output_text,
+      result_image: firstDemo.output_image,
+      result_video_url: firstDemo.output_video,
+      result_audio_url: firstDemo.output_audio,
+    };
+  };
+
+  // Convert all demos to UseCase format for UseCase display
+  const getAllDemosAsUseCases = () => {
+    const demos = getDemos();
+    
+    return demos.map(demo => ({
+      title: demo.title,
+      description: demo.description,
+      type: demo.demo_type,
+      prompt: demo.input_prompt,
+      result: demo.output_text,
+      input_image_url: demo.input_image,
+      output_image_url: demo.output_image,
+      input_video_url: demo.input_video,
+      output_video_url: demo.output_video,
+      input_audio_url: demo.input_audio,
+      output_audio_url: demo.output_audio,
+    }));
+  };
+
+  // ==================== DATA PROCESSING ====================
+
+  const keyFeatures = getKeyFeatures();
+  const usageSteps = getUsageSteps();
+  const demos = getDemos();
+  const firstDemo = getFirstDemo();
+  const demosAsUseCases = getAllDemosAsUseCases();
+
+  console.log("Processed - Features:", keyFeatures.length, "Steps:", usageSteps.length, "Demos:", demos.length);
 
   const infoCards = [
     { icon: DollarSign, label: "Pricing", value: tool.pricing, color: "from-green-500 to-emerald-500" },
@@ -194,46 +264,38 @@ export default function AIToolDetail() {
           ))}
         </div>
 
-        {/* SMART DEMO SECTION - Displays based on tool.type */}
-        <SmartDemoSection tool={tool} />
+        {/* ===== FEATURED LIVE DEMO (ABOVE TABS) ===== */}
+        {firstDemo && (
+          <div className="mb-8">
+            <SmartDemoSection tool={firstDemo} />
+          </div>
+        )}
 
-        {/* Tabbed Content */}
+        {/* ===== TABBED CONTENT ===== */}
         <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-xl">
           <CardContent className="p-0">
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="w-full justify-start rounded-none border-b border-gray-200 dark:border-gray-800 bg-transparent p-0 h-auto flex-wrap">
-                <TabsTrigger 
-                  value="overview" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4"
-                >
+                <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                   <BookOpen className="w-4 h-4 mr-2" />
                   Overview
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="guide" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4"
-                >
-                  <Target className="w-4 h-4 mr-2" />
-                  Usage Guide
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="cases" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4"
-                >
-                  <Lightbulb className="w-4 h-4 mr-2" />
-                  Use Cases
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="prompts" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Prompt Builder
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="review" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4"
-                >
+
+                {usageSteps.length > 0 && (
+                  <TabsTrigger value="guide" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
+                    <Target className="w-4 h-4 mr-2" />
+                    Usage Guide
+                  </TabsTrigger>
+                )}
+
+                {demosAsUseCases.length > 0 && (
+                  <TabsTrigger value="usecases" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
+                    <Lightbulb className="w-4 h-4 mr-2" />
+                    Use Cases ({demosAsUseCases.length})
+                  </TabsTrigger>
+                )}
+
+                <TabsTrigger value="review" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                   <Star className="w-4 h-4 mr-2" />
                   Review
                 </TabsTrigger>
@@ -258,20 +320,18 @@ export default function AIToolDetail() {
                       </div>
                     </div>
 
-                    {tool.key_features && tool.key_features.length > 0 && (
+                    {keyFeatures.length > 0 && (
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                           Key Features
                         </h3>
                         <div className="grid md:grid-cols-2 gap-4">
-                          {getKeyFeatures().map((feature, index) => (
+                          {keyFeatures.map((feature, index) => (
                             <Card key={index} className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border-indigo-200 dark:border-indigo-800">
                               <CardContent className="p-4 flex items-start gap-3">
                                 <span 
-                                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold shadow-lg"
-                                  style={{
-                                    background: tool.brand_color || '#667eea'
-                                  }}
+                                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold shadow-lg" 
+                                  style={{ background: tool.brand_color || '#667eea' }}
                                 >
                                   {index + 1}
                                 </span>
@@ -288,40 +348,128 @@ export default function AIToolDetail() {
                 </TabsContent>
 
                 {/* Usage Guide Tab */}
-                <TabsContent value="guide" className="mt-0">
-                  <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                      Step-by-Step Usage Guide for {tool.name}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Follow these steps to get started with {tool.name}
-                    </p>
-                    <div className="prose prose-lg dark:prose-invert max-w-none">
-                      {tool.usage_guide ? (
-                        <ReactMarkdown>{tool.usage_guide}</ReactMarkdown>
-                      ) : (
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Usage guide coming soon...
+                {usageSteps.length > 0 && (
+                  <TabsContent value="guide" className="mt-0">
+                    <div className="space-y-8">
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                          How to Use {tool.name}
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
+                          Follow these steps to get the most out of {tool.name}
                         </p>
-                      )}
+                      </div>
+
+                      <div className="space-y-4">
+                        {usageSteps.map((step, idx) => (
+                          <div key={idx} className="flex gap-4 items-start">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1 pt-1">
+                              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                {step}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </TabsContent>
+                  </TabsContent>
+                )}
 
-                {/* Use Cases Tab */}
-                <TabsContent value="cases" className="mt-0">
-                  <UseCasesList 
-                    useCases={tool.use_cases} 
-                    toolName={tool.name}
-                    brandColor={tool.brand_color}
-                    filterCategories={tool.filter_categories}
-                  />
-                </TabsContent>
+                {/* Use Cases Tab - Show ALL Demos */}
+                {demosAsUseCases.length > 0 && (
+                  <TabsContent value="usecases" className="mt-0">
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                          Use Cases
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-lg">
+                          Explore real-world examples of how {tool.name} can be used
+                        </p>
+                      </div>
 
-                {/* Prompt Builder Tab */}
-                <TabsContent value="prompts" className="mt-0">
-                  <PromptBuilder tool={tool} />
-                </TabsContent>
+                      <div className="space-y-6">
+                        {demosAsUseCases.map((useCase, idx) => (
+                          <Card key={idx} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 overflow-hidden">
+                            <CardContent className="p-6 space-y-4">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                                  {idx + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {useCase.title}
+                                  </h3>
+                                  {useCase.type && (
+                                    <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-1">
+                                      Type: {useCase.type}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {useCase.description && (
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  {useCase.description}
+                                </p>
+                              )}
+
+                              {/* Prompt & Result */}
+                              {(useCase.prompt || useCase.result) && (
+                                <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3">
+                                  {useCase.prompt && (
+                                    <div>
+                                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        📝 Prompt
+                                      </p>
+                                      <p className="text-gray-600 dark:text-gray-400 italic">
+                                        "{useCase.prompt}"
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {useCase.result && (
+                                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        ✨ Result
+                                      </p>
+                                      <p className="text-gray-600 dark:text-gray-400">
+                                        {useCase.result}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Media Examples */}
+                              {(useCase.input_image_url || useCase.output_image_url || 
+                                useCase.input_video_url || useCase.output_video_url ||
+                                useCase.input_audio_url || useCase.output_audio_url) && (
+                                <div className="grid grid-cols-2 gap-4 mt-4">
+                                  {useCase.input_image_url && (
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Input Image</p>
+                                      <img src={useCase.input_image_url} alt="Input" className="rounded-lg w-full h-40 object-cover" />
+                                    </div>
+                                  )}
+                                  {useCase.output_image_url && (
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Output Image</p>
+                                      <img src={useCase.output_image_url} alt="Output" className="rounded-lg w-full h-40 object-cover" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+                )}
 
                 {/* Review Tab */}
                 <TabsContent value="review" className="mt-0">
@@ -338,14 +486,13 @@ export default function AIToolDetail() {
         <div className="fixed bottom-8 right-8 z-50 hidden lg:block">
           <a href={tool.website_url} target="_blank" rel="noopener noreferrer">
             <Button 
-              className="px-6 py-6 text-lg text-white shadow-2xl hover:shadow-3xl ripple rounded-full"
+              className="px-6 py-6 text-lg text-white shadow-2xl hover:scale-105 transition-transform duration-200"
               style={{
                 background: tool.brand_color 
                   ? `linear-gradient(135deg, ${tool.brand_color}, ${tool.brand_color}dd)` 
                   : 'linear-gradient(135deg, #667eea, #764ba2)'
               }}
             >
-              <ExternalLink className="w-5 h-5 mr-2" />
               Try {tool.name}
             </Button>
           </a>
