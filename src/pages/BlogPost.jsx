@@ -178,7 +178,7 @@ export default function BlogPost() {
         )}
 
         {/* Back Button */}
-        <div className="absolute top-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-8 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link to={createPageUrl("Blog")}>
             <Button variant="ghost" className="text-white hover:bg-white/20 -ml-2">
               <ArrowLeft className="w-4 h-4 mr-2" /> 
@@ -188,7 +188,7 @@ export default function BlogPost() {
         </div>
 
         {/* Hero Content */}
-        <div className="absolute bottom-0 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="absolute bottom-0 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {post.category && (
             <Badge className={`${categoryColors[post.category]} mb-4`}>
               {post.category}
@@ -247,8 +247,8 @@ export default function BlogPost() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-6 md:px-8 py-20">
+      {/* Main Content - Increased max-width from max-w-2xl to max-w-4xl */}
+      <div className="max-w-4xl mx-auto px-6 md:px-8 py-20">
         <div className="text-gray-800 dark:text-gray-100">
           {/* Blog Content */}
           <ReactMarkdown
@@ -330,8 +330,8 @@ export default function BlogPost() {
         </div>
       </div>
 
-      {/* Share Section */}
-      <div className="max-w-2xl mx-auto px-6 md:px-8 py-8 border-t border-gray-200 dark:border-gray-800">
+      {/* Share Section - Also increased max-width to match content */}
+      <div className="max-w-4xl mx-auto px-6 md:px-8 py-8 border-t border-gray-200 dark:border-gray-800">
         <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">
           {language === 'ka' ? 'სტატიის გაზიარება:' : 'Share this article:'}
         </p>
@@ -362,7 +362,7 @@ export default function BlogPost() {
             variant="outline" 
             size="sm"
           >
-            <LinkIcon className="w-4 h-4 mr-2" /> {language === 'ka' ? 'ბმული დაკოპირება' : 'Copy Link'}
+            <LinkIcon className="w-4 h-4 mr-2" /> {language === 'ka' ? 'ბმულის დაკოპირება' : 'Copy Link'}
           </Button>
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function BlogPost() {
       {relatedPosts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-gray-200 dark:border-gray-800">
           <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
-            {language === 'ka' ? 'დაკავშირებული სტატიები' : 'Related Articles'}
+            {language === 'ka' ? 'სხვა სტატიები' : 'Related Articles'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {relatedPosts.map(p => (

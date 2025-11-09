@@ -1,10 +1,14 @@
 import { useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { authService } from '../services/auth';
+import { useLanguage } from '@/components/LanguageContext';
+import { translations } from '@/components/translations';
 
 export default function PageNotFound() {
   const location = useLocation();
   const pageName = location.pathname.substring(1);
+  const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
 
   const [authData, setAuthData] = useState({
     user: null,
@@ -22,36 +26,42 @@ export default function PageNotFound() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-gray-950">
       <div className="max-w-md w-full">
         <div className="text-center space-y-6">
           {/* 404 Error Code */}
           <div className="space-y-2">
-            <h1 className="text-7xl font-light text-slate-300">404</h1>
-            <div className="h-0.5 w-16 bg-slate-200 mx-auto"></div>
+            <h1 className="text-7xl font-light text-slate-300 dark:text-slate-700">404</h1>
+            <div className="h-0.5 w-16 bg-slate-200 dark:bg-slate-800 mx-auto"></div>
           </div>
 
           {/* Main Message */}
           <div className="space-y-3">
-            <h2 className="text-2xl font-medium text-slate-800">
-              Page Not Found
+            <h2 className="text-2xl font-medium text-slate-800 dark:text-slate-200">
+              {t('pageNotFound')}
             </h2>
-            <p className="text-slate-600 leading-relaxed">
-              The page <span className="font-medium text-slate-700">"{pageName}"</span> could not be found in this application.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+              {language === 'ka' 
+                ? `გვერდი "${pageName}" ამ აპლიკაციაში ვერ მოიძებნა.`
+                : `The page "${pageName}" could not be found in this application.`}
             </p>
           </div>
 
           {/* Admin Note */}
           {authData.isAuthenticated && authData.user?.is_staff && (
-            <div className="mt-8 p-4 bg-slate-100 rounded-lg border border-slate-200">
+            <div className="mt-8 p-4 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center mt-0.5">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mt-0.5">
                   <div className="w-2 h-2 rounded-full bg-orange-400"></div>
                 </div>
                 <div className="text-left space-y-1">
-                  <p className="text-sm font-medium text-slate-700">Admin Note</p>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    This page doesn’t exist yet. You can create or publish it from your Django admin panel.
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {language === 'ka' ? 'ადმინის შენიშვნა' : 'Admin Note'}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {language === 'ka'
+                      ? 'ეს გვერდი ჯერ არ არსებობს. თქვენ შეგიძლია შექმნათ ან გამოაქვეყნოთ იგი თქვენი Django admin პანელიდან.'
+                      : 'This page doesn\'t exist yet. You can create or publish it from your Django admin panel.'}
                   </p>
                 </div>
               </div>
@@ -62,7 +72,7 @@ export default function PageNotFound() {
           <div className="pt-6">
             <button
               onClick={() => (window.location.href = '/')}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-950 focus:ring-slate-500"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -72,7 +82,7 @@ export default function PageNotFound() {
                   d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                 />
               </svg>
-              Go Home
+              {t('goHome')}
             </button>
           </div>
         </div>

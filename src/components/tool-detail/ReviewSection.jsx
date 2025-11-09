@@ -1,8 +1,14 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThumbsUp, ThumbsDown, Star, Award, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
+import { getLocalizedField } from "@/lib/localization";
+import { translations } from "@/components/translations";
 
 export default function ReviewSection({ tool }) {
+  const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
+
   const renderStars = (rating) => {
     return Array(5).fill(0).map((_, i) => (
       <Star
@@ -21,7 +27,7 @@ export default function ReviewSection({ tool }) {
     if (!tool.pros) return [];
     if (Array.isArray(tool.pros)) {
       return tool.pros
-        .map(pro => typeof pro === 'string' ? pro : pro.text)
+        .map(pro => getLocalizedField(pro, 'text', language) || pro)
         .filter(Boolean);
     }
     return [];
@@ -31,7 +37,7 @@ export default function ReviewSection({ tool }) {
     if (!tool.cons) return [];
     if (Array.isArray(tool.cons)) {
       return tool.cons
-        .map(con => typeof con === 'string' ? con : con.text)
+        .map(con => getLocalizedField(con, 'text', language) || con)
         .filter(Boolean);
     }
     return [];
@@ -39,24 +45,24 @@ export default function ReviewSection({ tool }) {
 
   const pros = getPros();
   const cons = getCons();
-  const hasPros = pros.length > 0;
-  const hasCons = cons.length > 0;
   const hasReview = tool.review && tool.review.trim().length > 0;
   const hasEditorScore = tool.editor_score !== null && tool.editor_score !== undefined;
   const hasRating = tool.rating !== null && tool.rating !== undefined;
 
   // If nothing to show, display empty state
-  if (!hasPros && !hasCons && !hasReview && !hasEditorScore) {
+  if (!pros.length && !cons.length && !hasReview && !hasEditorScore) {
     return (
       <div className="space-y-6">
         <Card className="bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
             <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
-              Review Coming Soon
+              {language === 'ka' ? 'მიმოხილვა მალე' : 'Review Coming Soon'}
             </h4>
             <p className="text-blue-800 dark:text-blue-400">
-              Our editorial team is currently reviewing this tool. Check back soon for detailed insights, pros, cons, and our expert rating.
+              {language === 'ka' 
+                ? 'ჩვენი რედაქტორის გუნდი ამჟამად აკვირდება ამ ხელსაწყოს. მალე დაბრუნდით დეტალური შეხედვისთვის, უპირატესობებისთვის, მინუსებისთვის და ჩვენი ექსპერტის შეფასებისთვის.'
+                : 'Our editorial team is currently reviewing this tool. Check back soon for detailed insights, pros, cons, and our expert rating.'}
             </p>
           </CardContent>
         </Card>
@@ -73,13 +79,15 @@ export default function ReviewSection({ tool }) {
             <div className="flex items-center justify-center gap-3 mb-4">
               <Award className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Editor's Score
+                {t('editorsScore')}
               </h3>
             </div>
             <div className="text-6xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
               {tool.editor_score.toFixed(1)}
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-lg mb-4">out of 10</p>
+            <p className="text-gray-600 dark:text-gray-400 text-lg mb-4">
+              {t('outOf')} 10
+            </p>
             {hasRating && (
               <div className="flex items-center justify-center gap-2">
                 {renderStars(tool.rating)}
@@ -90,16 +98,16 @@ export default function ReviewSection({ tool }) {
       )}
 
       {/* Pros and Cons */}
-      {(hasPros || hasCons) && (
+      {(pros.length > 0 || cons.length > 0) && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Pros */}
-          {hasPros && (
+          {pros.length > 0 && (
             <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <ThumbsUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <h3 className="font-semibold text-green-900 dark:text-green-300 text-lg">
-                    Pros
+                    {t('pro')}
                   </h3>
                 </div>
                 <ul className="space-y-3">
@@ -117,13 +125,13 @@ export default function ReviewSection({ tool }) {
           )}
 
           {/* Cons */}
-          {hasCons && (
+          {cons.length > 0 && (
             <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <ThumbsDown className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <h3 className="font-semibold text-red-900 dark:text-red-300 text-lg">
-                    Cons
+                    {t('con')}
                   </h3>
                 </div>
                 <ul className="space-y-3">
@@ -147,10 +155,10 @@ export default function ReviewSection({ tool }) {
         <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
           <CardContent className="p-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Editorial Review
+              {t('editorialReview')}
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg whitespace-pre-wrap">
-              {tool.review}
+              {getLocalizedField(tool, 'review', language)}
             </p>
           </CardContent>
         </Card>
@@ -167,7 +175,7 @@ export default function ReviewSection({ tool }) {
                     {tool.rating?.toFixed(1) || 'N/A'}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    User Rating
+                    {language === 'ka' ? 'მომხმარებლის შეფასება' : 'User Rating'}
                   </div>
                 </div>
               )}
@@ -177,7 +185,7 @@ export default function ReviewSection({ tool }) {
                     {tool.editor_score?.toFixed(1) || 'N/A'}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Editor Score
+                    {t('editorsScore')}
                   </div>
                 </div>
               )}
@@ -186,7 +194,7 @@ export default function ReviewSection({ tool }) {
                   {tool.users || 'N/A'}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Users
+                  {t('users')}
                 </div>
               </div>
             </div>

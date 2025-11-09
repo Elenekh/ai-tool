@@ -1,8 +1,4 @@
-// ============================================
-// SMART DEMO COMPONENT - Detects AI Type
-// ============================================
-// This component automatically detects the tool type
-// and displays only relevant demo fields
+// SMART DEMO COMPONENT - Detects AI Type with Translations
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,67 +6,72 @@ import {
   Zap, ImageIcon, Play, Volume2, Type, 
   ArrowRight, Video as VideoIcon
 } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
+import { getLocalizedField } from "@/lib/localization";
+import { translations } from "@/components/translations";
 
 /**
  * Detects the type of AI tool and returns relevant display info
  */
-const getToolTypeConfig = (toolType) => {
+const getToolTypeConfig = (toolType, language) => {
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
+
   const configs = {
     'text-to-text': {
-      name: 'Text to Text',
+      name: language === 'ka' ? 'ტექსტი ტექსტამდე' : 'Text to Text',
       icon: Type,
       displayFields: ['prompt', 'result_text'],
-      inputLabel: 'Input Prompt',
-      outputLabel: 'Output Result',
-      description: 'Text input and text output'
+      inputLabel: language === 'ka' ? 'შეყვანის მოთხოვნა' : 'Input Prompt',
+      outputLabel: language === 'ka' ? 'გამომავალი შედეგი' : 'Output Result',
+      description: language === 'ka' ? 'ტექსტი შენობის და ტექსტის გამოშედეგი' : 'Text input and text output'
     },
     'text-to-image': {
-      name: 'Text to Image',
+      name: language === 'ka' ? 'ტექსტი სურათამდე' : 'Text to Image',
       icon: ImageIcon,
       displayFields: ['prompt', 'result_image'],
-      inputLabel: 'Text Prompt',
-      outputLabel: 'Generated Image',
-      description: 'Text input produces image output'
+      inputLabel: language === 'ka' ? 'ტექსტის მოთხოვნა' : 'Text Prompt',
+      outputLabel: language === 'ka' ? 'გენერირებული სურათი' : 'Generated Image',
+      description: language === 'ka' ? 'ტექსტი შენობის სურათის გამოშედეგი' : 'Text input produces image output'
     },
     'text-to-video': {
-      name: 'Text to Video',
+      name: language === 'ka' ? 'ტექსტი ვიდეოამდე' : 'Text to Video',
       icon: VideoIcon,
       displayFields: ['prompt', 'result_video_url'],
-      inputLabel: 'Text Prompt',
-      outputLabel: 'Generated Video',
-      description: 'Text input produces video output'
+      inputLabel: language === 'ka' ? 'ტექსტის მოთხოვნა' : 'Text Prompt',
+      outputLabel: language === 'ka' ? 'გენერირებული ვიდეო' : 'Generated Video',
+      description: language === 'ka' ? 'ტექსტი შენობის ვიდეოს გამოშედეგი' : 'Text input produces video output'
     },
     'text-to-audio': {
-      name: 'Text to Audio',
+      name: language === 'ka' ? 'ტექსტი აუდიოამდე' : 'Text to Audio',
       icon: Volume2,
       displayFields: ['prompt', 'result_audio_url'],
-      inputLabel: 'Text Prompt',
-      outputLabel: 'Generated Audio',
-      description: 'Text input produces audio output'
+      inputLabel: language === 'ka' ? 'ტექსტის მოთხოვნა' : 'Text Prompt',
+      outputLabel: language === 'ka' ? 'გენერირებული აუდიო' : 'Generated Audio',
+      description: language === 'ka' ? 'ტექსტი შენობის აუდიოს გამოშედეგი' : 'Text input produces audio output'
     },
     'image-to-image': {
-      name: 'Image to Image',
+      name: language === 'ka' ? 'სურათი სურათამდე' : 'Image to Image',
       icon: ImageIcon,
       displayFields: ['prompt_image', 'result_image'],
-      inputLabel: 'Input Image',
-      outputLabel: 'Output Image',
-      description: 'Image input produces transformed image'
+      inputLabel: language === 'ka' ? 'შენობის სურათი' : 'Input Image',
+      outputLabel: language === 'ka' ? 'გამომავალი სურათი' : 'Output Image',
+      description: language === 'ka' ? 'სურათი შენობის გარდაქმნილი სურათის გამოშედეგი' : 'Image input produces transformed image'
     },
     'image-to-video': {
-      name: 'Image to Video',
+      name: language === 'ka' ? 'სურათი ვიდეოამდე' : 'Image to Video',
       icon: VideoIcon,
       displayFields: ['prompt_image', 'result_video_url'],
-      inputLabel: 'Input Image',
-      outputLabel: 'Generated Video',
-      description: 'Image input produces video output'
+      inputLabel: language === 'ka' ? 'შენობის სურათი' : 'Input Image',
+      outputLabel: language === 'ka' ? 'გენერირებული ვიდეო' : 'Generated Video',
+      description: language === 'ka' ? 'სურათი შენობის ვიდეოს გამოშედეგი' : 'Image input produces video output'
     },
     'other': {
-      name: 'AI Tool',
+      name: language === 'ka' ? 'AI ხელსაწყო' : 'AI Tool',
       icon: Zap,
       displayFields: ['prompt', 'result_text', 'result_image', 'result_video_url', 'result_audio_url'],
-      inputLabel: 'Input',
-      outputLabel: 'Output',
-      description: 'Interactive demo'
+      inputLabel: language === 'ka' ? 'შეყვანა' : 'Input',
+      outputLabel: language === 'ka' ? 'გამომავალი' : 'Output',
+      description: language === 'ka' ? 'ინტერაქტიული დემო' : 'Interactive demo'
     }
   };
 
@@ -88,7 +89,7 @@ const hasValidField = (tool, fieldName) => {
 /**
  * Render based on field type
  */
-const renderField = (tool, fieldName, label) => {
+const renderField = (tool, fieldName, label, language) => {
   if (fieldName === 'prompt') {
     return renderTextField(tool.prompt, label, 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800');
   }
@@ -211,6 +212,7 @@ const renderVideoField = (videoUrl, label) => {
             preload="metadata"
           >
             <source src={videoUrl} type="video/mp4" />
+            {/* Fallback message for browsers that don't support HTML5 video */}
             Your browser does not support the video tag.
           </video>
         )}
@@ -249,10 +251,13 @@ const renderAudioField = (audioUrl, label) => {
  * Main Demo Component
  */
 export const SmartDemoSection = ({ tool }) => {
+  const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
+
   if (!tool || !tool.type) return null;
 
   // Get configuration for this tool type
-  const config = getToolTypeConfig(tool.type);
+  const config = getToolTypeConfig(tool.type, language);
   const Icon = config.icon;
 
   // Check if we have any data to display
@@ -273,7 +278,7 @@ export const SmartDemoSection = ({ tool }) => {
               <Icon className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Live Demo
+              {language === 'ka' ? 'ცოცხალი დემო' : 'Live Demo'}
             </h3>
           </div>
           <p className="text-gray-600 dark:text-gray-400">
@@ -297,7 +302,7 @@ export const SmartDemoSection = ({ tool }) => {
                 'prompt_image': config.inputLabel
               };
 
-              return renderField(tool, field, labels[field] || config.inputLabel);
+              return renderField(tool, field, labels[field] || config.inputLabel, language);
             })}
           </div>
 
@@ -326,7 +331,7 @@ export const SmartDemoSection = ({ tool }) => {
                 'result_audio_url': config.outputLabel
               };
 
-              return renderField(tool, field, labels[field] || config.outputLabel);
+              return renderField(tool, field, labels[field] || config.outputLabel, language);
             })}
           </div>
         </div>

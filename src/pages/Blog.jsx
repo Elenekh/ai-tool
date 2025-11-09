@@ -17,7 +17,7 @@ export default function Blog() {
   // Translations
   const translations = {
     title: language === 'ka' ? 'ბლოგი და სახელმძღვანელოები' : 'Blog & Guides',
-    subtitle: language === 'ka' ? 'სიღრმის სტატიები, სახელმძღვანელოები და AI ექსპერტებისგან ინფორმაცია' : 'In-depth articles, tutorials, and insights from AI experts',
+    subtitle: language === 'ka' ? 'სტატიები, სახელმძღვანელოები და AI ექსპერტებისგან ინფორმაცია' : 'In-depth articles, tutorials, and insights from AI experts',
     publishedArticles: language === 'ka' ? 'გამოქვეყნებული სტატიები' : 'Published Articles',
     totalViews: language === 'ka' ? 'მთლიანი ნახვები' : 'Total Views',
     minReadTime: language === 'ka' ? 'წთ კითხვის დრო' : 'Min Read Time',

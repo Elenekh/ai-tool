@@ -19,7 +19,7 @@ export default function AITools() {
   // Translations
   const translations = {
     title: language === 'ka' ? 'AI ხელსაწყოების დირექტორია' : 'AI Tools Directory',
-    subtitle: language === 'ka' ? 'აღმოაჩინეთ და შეადარეთ 200+ ხელოვნური ინტელექტის ხელსაწყოები' : 'Discover and compare 200+ cutting-edge AI tools',
+    subtitle: language === 'ka' ? 'აღმოაჩინეთ და შეადარეთ ხელოვნური ინტელექტის ხელსაწყოები' : 'Discover and compare 200+ cutting-edge AI tools',
     searchPlaceholder: language === 'ka' ? 'მოძებნეთ AI ხელსაწყოები...' : 'Search AI tools...',
     filterSort: language === 'ka' ? 'ფილტრი და დალაგება:' : 'Filter & Sort:',
     category: language === 'ka' ? 'კატეგორია' : 'Category',
@@ -41,7 +41,7 @@ export default function AITools() {
     adjustFilters: language === 'ka' ? 'სცადეთ ფილტრების ან ძიების შეცვლა' : 'Try adjusting your filters or search query',
     // Pricing options
     free: language === 'ka' ? 'უფასო' : 'Free',
-    freemium: language === 'ka' ? 'ფრიმიუმი' : 'Freemium',
+    freemium: language === 'ka' ? 'პრემიუმი' : 'Freemium',
     paid: language === 'ka' ? 'ფასიანი' : 'Paid',
     enterprise: language === 'ka' ? 'საწარმო' : 'Enterprise',
     // Difficulty options
@@ -146,7 +146,7 @@ export default function AITools() {
             {translations.title}
           </h1>
           <p className="text-xl text-indigo-100">
-            {translations.subtitle} ({allTools.length})
+            {translations.subtitle}
           </p>
         </div>
       </div>

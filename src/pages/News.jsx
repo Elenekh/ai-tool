@@ -4,10 +4,35 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Newspaper } from "lucide-react";
 import NewsCard from "../components/NewsCard";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function News() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const { language } = useLanguage();
+
+  // Translations
+  const translations = {
+    title: { en: 'AI News & Updates', ka: 'AI სიახლეები და განახლებები' },
+    subtitle: { en: 'Stay updated with the latest developments in the AI industry', ka: 'იყავით განახლებული AI ინდუსტრიის უახლესი განვითარებით' },
+    searchPlaceholder: { en: 'Search news...', ka: 'მოძებნეთ სიახლეები...' },
+    category: { en: 'Category', ka: 'კატეგორია' },
+    allCategories: { en: 'All Categories', ka: 'ყველა კატეგორია' },
+    productLaunch: { en: 'Product Launch', ka: 'პროდუქტის გამოშვება' },
+    featureUpdate: { en: 'Feature Update', ka: 'ფუნქციის განახლება' },
+    industryNews: { en: 'Industry News', ka: 'ინდუსტრიის სიახლეები' },
+    companyAnnouncement: { en: 'Company Announcement', ka: 'კომპანიის განცხადება' },
+    research: { en: 'Research', ka: 'კვლევა' },
+    events: { en: 'Events', ka: 'ივენთები' },
+    showing: { en: 'Showing', ka: 'ნაჩვენებია' },
+    newsItem: { en: 'news item', ka: 'სიახლის ელემენტი' },
+    newsItems: { en: 'news items', ka: 'სიახლის ელემენტი' },
+    noNewsFound: { en: 'No news found', ka: 'სიახლეები არ მოიძებნა' },
+    tryDifferent: { en: 'Try a different search term or category', ka: 'სცადეთ სხვა ძიების ტერმინი ან კატეგორია' },
+  };
+
+  const t = (key) => translations[key]?.[language] || translations[key]?.en || '';
 
   // Build API params
   const apiParams = useMemo(() => {
@@ -32,18 +57,19 @@ export default function News() {
   const news = useMemo(() => {
     if (Array.isArray(data)) return data;
     if (!data) return [];
-    // If the API returns a paginated object like { count, next, previous, results }
     return data.results ?? [];
   }, [data]);
 
-  // Client-side filtering (guard field access)
+  // Client-side filtering
   const filteredNews = useMemo(() => {
     const q = (searchQuery || "").trim().toLowerCase();
     if (!q) return news;
     return news.filter(item => {
       const title = (item.title || "").toString().toLowerCase();
+      const titleGe = (item.title_ge || "").toString().toLowerCase();
       const summary = (item.summary || "").toString().toLowerCase();
-      return title.includes(q) || summary.includes(q);
+      const summaryGe = (item.summary_ge || "").toString().toLowerCase();
+      return title.includes(q) || titleGe.includes(q) || summary.includes(q) || summaryGe.includes(q);
     });
   }, [news, searchQuery]);
 
@@ -55,11 +81,11 @@ export default function News() {
           <div className="flex items-center gap-4 mb-4">
             <Newspaper className="w-12 h-12 text-white" />
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              AI News & Updates
+              {t('title')}
             </h1>
           </div>
           <p className="text-xl text-indigo-100">
-            Stay updated with the latest developments in the AI industry
+            {t('subtitle')}
           </p>
         </div>
       </div>
@@ -71,7 +97,7 @@ export default function News() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Search news..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
@@ -80,16 +106,16 @@ export default function News() {
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder={t('category')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Product Launch">Product Launch</SelectItem>
-                <SelectItem value="Feature Update">Feature Update</SelectItem>
-                <SelectItem value="Industry News">Industry News</SelectItem>
-                <SelectItem value="Company Announcement">Company Announcement</SelectItem>
-                <SelectItem value="Research">Research</SelectItem>
-                <SelectItem value="Events">Events</SelectItem>
+                <SelectItem value="all">{t('allCategories')}</SelectItem>
+                <SelectItem value="Product Launch">{t('productLaunch')}</SelectItem>
+                <SelectItem value="Feature Update">{t('featureUpdate')}</SelectItem>
+                <SelectItem value="Industry News">{t('industryNews')}</SelectItem>
+                <SelectItem value="Company Announcement">{t('companyAnnouncement')}</SelectItem>
+                <SelectItem value="Research">{t('research')}</SelectItem>
+                <SelectItem value="Events">{t('events')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -108,7 +134,7 @@ export default function News() {
           <>
             <div className="mb-8">
               <p className="text-gray-600 dark:text-gray-400">
-                Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredNews.length}</span> news item{filteredNews.length !== 1 ? 's' : ''}
+                {t('showing')} <span className="font-semibold text-gray-900 dark:text-white">{filteredNews.length}</span> {filteredNews.length === 1 ? t('newsItem') : t('newsItems')}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -121,10 +147,10 @@ export default function News() {
           <div className="text-center py-20">
             <Search className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
             <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-              No news found
+              {t('noNewsFound')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Try a different search term or category
+              {t('tryDifferent')}
             </p>
           </div>
         )}

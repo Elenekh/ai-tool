@@ -14,11 +14,16 @@ import {
 import ReactMarkdown from "react-markdown";
 import ReviewSection from "../components/tool-detail/ReviewSection";
 import SmartDemoSection from "../components/tool-detail/SmartDemoSection";
+import { useLanguage } from "@/components/LanguageContext";
+import { getLocalizedField } from "@/lib/localization";
+import { translations } from "@/components/translations";
 
 export default function AIToolDetail() {
   const [searchParams] = useSearchParams();
   const toolId = searchParams.get('id');
   const [hasViewed, setHasViewed] = useState(false);
+  const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
 
   const { data: tool, isLoading, error } = useTool(toolId);
 
@@ -38,7 +43,7 @@ export default function AIToolDetail() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading tool details...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t('loading')}</p>
         </div>
       </div>
     );
@@ -48,20 +53,19 @@ export default function AIToolDetail() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Tool not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('noToolsFound')}</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error?.message || 'Unable to load this tool'}
+            {error?.message || t('adjustFilters')}
           </p>
           <Link to={createPageUrl("AITools")}>
-            <Button variant="outline">Back to Tools</Button>
+            <Button variant="outline">{t('backToBlog')}</Button>
           </Link>
         </div>
       </div>
     );
   }
 
-  // ==================== HELPER FUNCTIONS ====================
-
+  // Helper functions
   const renderStars = (rating) => {
     return Array(5).fill(0).map((_, i) => (
       <Star
@@ -75,51 +79,38 @@ export default function AIToolDetail() {
     ));
   };
 
-  // Get key features from related objects
   const getKeyFeatures = () => {
     if (!tool.key_features) return [];
-    
     if (Array.isArray(tool.key_features)) {
       return tool.key_features
-        .map(kf => kf.feature || kf)
+        .map(kf => getLocalizedField(kf, 'feature', language) || kf)
         .filter(f => f && String(f).trim().length > 0);
     }
-    
     return [];
   };
 
-  // Get usage steps from related objects
   const getUsageSteps = () => {
     if (!tool.usage_steps) return [];
-    
     if (Array.isArray(tool.usage_steps)) {
       return tool.usage_steps
-        .map(us => us.step || us)
+        .map(us => getLocalizedField(us, 'step', language) || us)
         .filter(s => s && String(s).trim().length > 0);
     }
-    
     return [];
   };
 
-  // Get demos - all of them
   const getDemos = () => {
     if (!tool.demos) return [];
-    
     if (Array.isArray(tool.demos)) {
       return tool.demos.filter(d => d && d.title);
     }
-    
     return [];
   };
 
-  // Get the first demo to pass to SmartDemoSection (FEATURED DEMO)
   const getFirstDemo = () => {
     const demos = getDemos();
     if (demos.length === 0) return null;
-    
     const firstDemo = demos[0];
-    
-    // Convert ToolDemo structure to SmartDemoSection format
     return {
       type: firstDemo.demo_type || 'other',
       prompt: firstDemo.input_prompt,
@@ -130,13 +121,11 @@ export default function AIToolDetail() {
     };
   };
 
-  // Convert all demos to UseCase format for UseCase display
   const getAllDemosAsUseCases = () => {
     const demos = getDemos();
-    
     return demos.map(demo => ({
-      title: demo.title,
-      description: demo.description,
+      title: getLocalizedField(demo, 'title', language),
+      description: getLocalizedField(demo, 'description', language),
       type: demo.demo_type,
       prompt: demo.input_prompt,
       result: demo.output_text,
@@ -149,21 +138,19 @@ export default function AIToolDetail() {
     }));
   };
 
-  // ==================== DATA PROCESSING ====================
-
+  const toolName = getLocalizedField(tool, 'name', language);
+  const toolDescription = getLocalizedField(tool, 'description', language);
   const keyFeatures = getKeyFeatures();
   const usageSteps = getUsageSteps();
   const demos = getDemos();
   const firstDemo = getFirstDemo();
   const demosAsUseCases = getAllDemosAsUseCases();
 
-  console.log("Processed - Features:", keyFeatures.length, "Steps:", usageSteps.length, "Demos:", demos.length);
-
   const infoCards = [
-    { icon: DollarSign, label: "Pricing", value: tool.pricing, color: "from-green-500 to-emerald-500" },
-    { icon: Gauge, label: "Complexity", value: tool.difficulty, color: "from-orange-500 to-red-500" },
-    { icon: Users, label: "Users", value: tool.users || "N/A", color: "from-blue-500 to-cyan-500" },
-    { icon: Trophy, label: "Rating", value: `${tool.rating?.toFixed(1) || 0}/5`, color: "from-yellow-500 to-amber-500" }
+    { icon: DollarSign, label: t('pricing'), value: tool.pricing, color: "from-green-500 to-emerald-500" },
+    { icon: Gauge, label: t('Complexity'), value: tool.difficulty, color: "from-orange-500 to-red-500" },
+    { icon: Users, label: t('Users'), value: tool.users || "N/A", color: "from-blue-500 to-cyan-500" },
+    { icon: Trophy, label: t('rating'), value: `${tool.rating?.toFixed(1) || 0}/5`, color: "from-yellow-500 to-amber-500" }
   ];
 
   return (
@@ -174,19 +161,18 @@ export default function AIToolDetail() {
           <Link to={createPageUrl("AITools")}>
             <Button variant="ghost" className="mb-6 -ml-2">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Tools
+              {t('backTo')} {t('aiTools')}
             </Button>
           </Link>
 
           <div className="flex flex-col md:flex-row md:items-start gap-8">
-            {/* Tool Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
                 {tool.logo_url ? (
                   <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-gray-800 p-2 flex items-center justify-center">
                     <img 
                       src={tool.logo_url} 
-                      alt={`${tool.name} logo`}
+                      alt={`${toolName} logo`}
                       className="w-full h-full object-contain"
                     />
                   </div>
@@ -204,7 +190,7 @@ export default function AIToolDetail() {
                 )}
                 <div>
                   <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                    {tool.name}
+                    {toolName}
                   </h1>
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
@@ -217,7 +203,7 @@ export default function AIToolDetail() {
                 </div>
               </div>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-                {tool.description}
+                {toolDescription}
               </p>
               <Badge className="text-base px-4 py-1">
                 {tool.category}
@@ -235,7 +221,7 @@ export default function AIToolDetail() {
                       : 'linear-gradient(135deg, #667eea, #764ba2)'
                   }}
                 >
-                  Try {tool.name}
+                  {t('tryTool')} {toolName}
                   <ExternalLink className="w-5 h-5 ml-2" />
                 </Button>
               </a>
@@ -264,40 +250,40 @@ export default function AIToolDetail() {
           ))}
         </div>
 
-        {/* ===== FEATURED LIVE DEMO (ABOVE TABS) ===== */}
+        {/* Featured Live Demo */}
         {firstDemo && (
           <div className="mb-8">
             <SmartDemoSection tool={firstDemo} />
           </div>
         )}
 
-        {/* ===== TABBED CONTENT ===== */}
+        {/* Tabbed Content */}
         <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-xl">
           <CardContent className="p-0">
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="w-full justify-start rounded-none border-b border-gray-200 dark:border-gray-800 bg-transparent p-0 h-auto flex-wrap">
                 <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                   <BookOpen className="w-4 h-4 mr-2" />
-                  Overview
+                  {t('overview')}
                 </TabsTrigger>
 
                 {usageSteps.length > 0 && (
                   <TabsTrigger value="guide" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                     <Target className="w-4 h-4 mr-2" />
-                    Usage Guide
+                    {t('usageGuide')}
                   </TabsTrigger>
                 )}
 
                 {demosAsUseCases.length > 0 && (
                   <TabsTrigger value="usecases" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                     <Lightbulb className="w-4 h-4 mr-2" />
-                    Use Cases ({demosAsUseCases.length})
+                    {t('useCases')} ({demosAsUseCases.length})
                   </TabsTrigger>
                 )}
 
                 <TabsTrigger value="review" className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent px-6 py-4">
                   <Star className="w-4 h-4 mr-2" />
-                  Review
+                  {t('review')}
                 </TabsTrigger>
               </TabsList>
 
@@ -307,14 +293,14 @@ export default function AIToolDetail() {
                   <div className="space-y-8">
                     <div>
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                        About {tool.name}
+                        {language === 'ka' ? 'შესახებ' : 'About'} {toolName}
                       </h2>
                       <div className="prose prose-lg dark:prose-invert max-w-none">
                         {tool.overview ? (
-                          <ReactMarkdown>{tool.overview}</ReactMarkdown>
+                          <ReactMarkdown>{getLocalizedField(tool, 'overview', language)}</ReactMarkdown>
                         ) : (
                           <p className="text-gray-600 dark:text-gray-400">
-                            {tool.description}
+                            {toolDescription}
                           </p>
                         )}
                       </div>
@@ -323,7 +309,7 @@ export default function AIToolDetail() {
                     {keyFeatures.length > 0 && (
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                          Key Features
+                          {t('keyFeatures')}
                         </h3>
                         <div className="grid md:grid-cols-2 gap-4">
                           {keyFeatures.map((feature, index) => (
@@ -353,10 +339,10 @@ export default function AIToolDetail() {
                     <div className="space-y-8">
                       <div>
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                          How to Use {tool.name}
+                          {t('usageGuide')} {toolName}
                         </h2>
                         <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
-                          Follow these steps to get the most out of {tool.name}
+                          {language === 'ka' ? 'დაიცავით ეს ნაბიჯები' : 'Follow these steps'} {toolName}
                         </p>
                       </div>
 
@@ -378,16 +364,16 @@ export default function AIToolDetail() {
                   </TabsContent>
                 )}
 
-                {/* Use Cases Tab - Show ALL Demos */}
+                {/* Use Cases Tab */}
                 {demosAsUseCases.length > 0 && (
                   <TabsContent value="usecases" className="mt-0">
                     <div className="space-y-6">
                       <div>
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                          Use Cases
+                          {t('useCases')}
                         </h2>
                         <p className="text-gray-600 dark:text-gray-400 text-lg">
-                          Explore real-world examples of how {tool.name} can be used
+                          {language === 'ka' ? 'ბეჭდი რეალური მაგალითები, თუ როგორ შეიძლება გამოყენებულ იქნეს' : 'Real-world examples of how'} {toolName}
                         </p>
                       </div>
 
@@ -405,7 +391,7 @@ export default function AIToolDetail() {
                                   </h3>
                                   {useCase.type && (
                                     <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-1">
-                                      Type: {useCase.type}
+                                      {language === 'ka' ? 'ტიპი:' : 'Type:'} {useCase.type}
                                     </p>
                                   )}
                                 </div>
@@ -417,13 +403,12 @@ export default function AIToolDetail() {
                                 </p>
                               )}
 
-                              {/* Prompt & Result */}
                               {(useCase.prompt || useCase.result) && (
                                 <div className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3">
                                   {useCase.prompt && (
                                     <div>
                                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        📝 Prompt
+                                        📝 {language === 'ka' ? 'შეყვანა' : 'Prompt'}
                                       </p>
                                       <p className="text-gray-600 dark:text-gray-400 italic">
                                         "{useCase.prompt}"
@@ -434,31 +419,11 @@ export default function AIToolDetail() {
                                   {useCase.result && (
                                     <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        ✨ Result
+                                        ✨ {language === 'ka' ? 'შედეგი' : 'Result'}
                                       </p>
                                       <p className="text-gray-600 dark:text-gray-400">
                                         {useCase.result}
                                       </p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Media Examples */}
-                              {(useCase.input_image_url || useCase.output_image_url || 
-                                useCase.input_video_url || useCase.output_video_url ||
-                                useCase.input_audio_url || useCase.output_audio_url) && (
-                                <div className="grid grid-cols-2 gap-4 mt-4">
-                                  {useCase.input_image_url && (
-                                    <div>
-                                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Input Image</p>
-                                      <img src={useCase.input_image_url} alt="Input" className="rounded-lg w-full h-40 object-cover" />
-                                    </div>
-                                  )}
-                                  {useCase.output_image_url && (
-                                    <div>
-                                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Output Image</p>
-                                      <img src={useCase.output_image_url} alt="Output" className="rounded-lg w-full h-40 object-cover" />
                                     </div>
                                   )}
                                 </div>
@@ -481,7 +446,7 @@ export default function AIToolDetail() {
         </Card>
       </div>
 
-      {/* Floating CTA Button */}
+      {/* Floating CTA */}
       {tool.website_url && (
         <div className="fixed bottom-8 right-8 z-50 hidden lg:block">
           <a href={tool.website_url} target="_blank" rel="noopener noreferrer">
@@ -493,7 +458,7 @@ export default function AIToolDetail() {
                   : 'linear-gradient(135deg, #667eea, #764ba2)'
               }}
             >
-              Try {tool.name}
+              {t('tryTool')} {toolName}
             </Button>
           </a>
         </div>

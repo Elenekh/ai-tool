@@ -7,25 +7,49 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, MapPin, ExternalLink, Linkedin, Instagram, Github, Twitter, Globe, BookOpen, Eye, FileText, CheckCircle } from "lucide-react";
 import BlogCard from "../components/BlogCard";
+import { useLanguage } from "@/components/LanguageContext";
+import { translations } from "@/components/translations";
+import { getLocalizedField } from "@/lib/localization";
 
 export default function AuthorPage() {
   const [searchParams] = useSearchParams();
   const authorSlug = searchParams.get('slug');
   const [sortBy, setSortBy] = useState("newest");
+  const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
 
   // Fetch author data
   const { data: author, isLoading: authorLoading, error: authorError } = useAuthor(authorSlug);
 
   // Fetch all blog posts
-  const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts({
+  const { data: postsData, isLoading: postsLoading } = useBlogPosts({
     ordering: '-created_at',
   });
 
+  // Ensure allPosts is always an array
+  const allPosts = useMemo(() => {
+    if (!postsData) return [];
+    // Handle different possible response structures
+    if (Array.isArray(postsData)) return postsData;
+    if (postsData.results && Array.isArray(postsData.results)) return postsData.results;
+    if (postsData.data && Array.isArray(postsData.data)) return postsData.data;
+    return [];
+  }, [postsData]);
+
   // Filter posts by author
   const authorPosts = useMemo(() => {
-    if (!author) return [];
+    if (!author || !Array.isArray(allPosts)) return [];
     
-    let filtered = allPosts.filter(post => post.author === author.name);
+    let filtered = allPosts.filter(post => {
+      // Handle different possible author field structures
+      if (typeof post.author === 'string') {
+        return post.author === author.name || post.author === author.slug;
+      }
+      if (typeof post.author === 'object' && post.author) {
+        return post.author.name === author.name || post.author.slug === author.slug;
+      }
+      return false;
+    });
     
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -63,7 +87,9 @@ export default function AuthorPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading author profile...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {language === 'ka' ? 'ავტორის პროფილი იტვირთება...' : 'Loading author profile...'}
+          </p>
         </div>
       </div>
     );
@@ -73,9 +99,14 @@ export default function AuthorPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Author not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('authorNotFound')}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {language === 'ka' 
+              ? `ავტორი "${authorSlug}" ვერ მოიძებნა.`
+              : `The author "${authorSlug}" could not be found.`}
+          </p>
           <Link to={createPageUrl("Blog")}>
-            <Button variant="outline">Back to Blog</Button>
+            <Button variant="outline">{t('backToBlog')}</Button>
           </Link>
         </div>
       </div>
@@ -90,38 +121,28 @@ export default function AuthorPage() {
     { icon: Globe, url: author.personal_website, label: "Website", color: "hover:text-indigo-600" }
   ].filter(link => link.url);
 
+  const authorBio = getLocalizedField(author, 'bio', language);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Cover Image / Header Banner */}
-      <div className="relative h-64 md:h-80 overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50 dark:to-gray-950"></div>
+      <div className="relative h-48 md:h-56 overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
+        <div className="absolute inset-0 bg-black/10"></div>
         
         {/* Breadcrumbs */}
-        <div className="absolute top-8 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link to={createPageUrl("Blog")}>
             <Button variant="ghost" className="text-white hover:bg-white/20 -ml-2">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Blog
+              {t('backToBlog')}
             </Button>
           </Link>
         </div>
-
-        {/* Author Name Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          <div className="flex items-center gap-3">
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              {author.name}
-            </h1>
-            {author.is_verified && (
-              <CheckCircle className="w-8 h-8 text-blue-500 fill-current" />
-            )}
-          </div>
-        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
-        {/* Author Profile Card */}
-        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-2xl mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Author Profile Card - Overlapping the header */}
+        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-2xl -mt-20 mb-8 relative z-10">
           <CardContent className="p-8">
             <div className="flex flex-col md:flex-row gap-8">
               {/* Profile Image */}
@@ -145,10 +166,20 @@ export default function AuthorPage() {
 
               {/* Profile Info */}
               <div className="flex-1">
+                {/* Author Name and Verification */}
+                <div className="flex items-center gap-3 mb-4">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                    {author.name}
+                  </h1>
+                  {author.is_verified && (
+                    <CheckCircle className="w-7 h-7 text-blue-500 fill-current flex-shrink-0" />
+                  )}
+                </div>
+
                 {/* Bio */}
-                {author.bio && (
+                {authorBio && (
                   <p className="text-lg text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                    {author.bio}
+                    {authorBio}
                   </p>
                 )}
 
@@ -188,7 +219,7 @@ export default function AuthorPage() {
                       {stats.totalPosts}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Articles
+                      {language === 'ka' ? 'სტატიები' : 'Articles'}
                     </div>
                   </div>
 
@@ -200,7 +231,7 @@ export default function AuthorPage() {
                       {stats.totalViews.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Total Views
+                      {t('totalViews')}
                     </div>
                   </div>
 
@@ -212,7 +243,7 @@ export default function AuthorPage() {
                       {stats.avgReadTime}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Avg. Read Time
+                      {t('avgReadTime')}
                     </div>
                   </div>
                 </div>
@@ -226,10 +257,10 @@ export default function AuthorPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Articles by {author.name}
+                {t('articlesBy')} {author.name}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                {stats.totalPosts} article{stats.totalPosts !== 1 ? 's' : ''} published
+                {stats.totalPosts} {language === 'ka' ? 'სტატია გამოქვეყნებულია' : 'articles published'}
               </p>
             </div>
 
@@ -237,12 +268,12 @@ export default function AuthorPage() {
             {authorPosts.length > 1 && (
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="newest">{t('newest')}</SelectItem>
+                  <SelectItem value="oldest">{t('oldest')}</SelectItem>
+                  <SelectItem value="popular">{t('popular')}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -260,10 +291,12 @@ export default function AuthorPage() {
               <CardContent className="p-12 text-center">
                 <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No articles yet
+                  {t('noArticlesYet')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  This author hasn't published any articles yet. Check back soon!
+                  {language === 'ka' 
+                    ? 'ეს ავტორი ჯერ არ გამოაქვეყნა რაიმე სტატია. მოგვიანებით დაბრუნდით!'
+                    : 'This author hasn\'t published any articles yet. Check back soon!'}
                 </p>
               </CardContent>
             </Card>

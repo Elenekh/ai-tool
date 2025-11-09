@@ -53,33 +53,33 @@ export default function Home() {
   // Translations
   const translations = {
     heroTitle1: language === 'ka' ? 'აღმოაჩინეთ და დაეუფლეთ' : 'Discover & Master',
-    heroTitle2: language === 'ka' ? 'ხვალინდელი AI ხელსაწყოები' : 'AI Tools of Tomorrow',
+    heroTitle2: language === 'ka' ? 'ხვალინდელ AI ხელსაწყოებს' : 'AI Tools of Tomorrow',
     heroSubtitle: language === 'ka' 
-      ? 'ყოვლისმომცველი მიმოხილვები, ნაბიჯ-ნაბიჯ სახელმძღვანელოები და უახლესი განახლებები ყველაზე ძლიერი AI ხელსაწყოების შესახებ, რომლებიც აყალიბებენ ჩვენს მომავალს.'
+      ? 'ყოვლისმომცველი მიმოხილვები, სახელმძღვანელოები და უახლესი განახლებები ყველაზე ძლიერი AI ხელსაწყოების შესახებ, რომლებიც აყალიბებენ ჩვენს მომავალს.'
       : 'Comprehensive reviews, step-by-step guides, and the latest updates on the most powerful AI tools shaping our future.',
     exploreTools: language === 'ka' ? 'გამოიკვლიეთ ხელსაწყოები' : 'Explore AI Tools',
     readGuides: language === 'ka' ? 'წაიკითხეთ სახელმძღვანელოები' : 'Read Guides',
-    reviewed: language === 'ka' ? 'მიმოხილული' : 'AI Tools Reviewed',
-    readers: language === 'ka' ? 'აქტიური მკითხველი' : 'Active Readers',
+    toolsReviewed: language === 'ka' ? 'მიმოხილული ხელსაწყოები' : 'AI Tools Reviewed',
+    articles: language === 'ka' ? 'სტატიები' : 'Articles Published',
     updates: language === 'ka' ? 'ყოველთვიური განახლება' : 'Monthly Updates',
     featuredTools: language === 'ka' ? 'პოპულარული AI ხელსაწყოები' : 'Featured AI Tools',
     featuredDesc: language === 'ka' 
-      ? 'კარგად შერჩეული ხელსაწყოები, რომლებიც აკეთებენ ღირებულ აქტივობას AI თემში'
+      ? 'შერჩეული ხელსაწყოები, რომლებიც არიან ღირებული AI სფეროში'
       : 'Hand-picked tools that are making waves in the AI community',
     viewAllTools: language === 'ka' ? 'ყველა ხელსაწყოს ნახვა' : 'View All AI Tools',
     latestArticles: language === 'ka' ? 'უახლესი სტატიები' : 'Latest Articles',
     articlesDesc: language === 'ka' 
-      ? 'AI ექსპერტებისგან სიღრმის სახელმძღვანელოები და ინფორმაცია'
+      ? 'AI ექსპერტებისგან სიღრმისეული სახელმძღვანელოები და ინფორმაცია'
       : 'In-depth guides and insights from AI experts',
     viewAllPosts: language === 'ka' ? 'ყველა სტატიის ნახვა' : 'View All Posts',
     latestNews: language === 'ka' ? 'სიახლეები' : 'Latest AI News',
     newsDesc: language === 'ka' 
-      ? 'იყავით განახლებული AI ინდუსტრიის ყველაზე ცხელი განვითარებებით'
+      ? 'იყავით განახლებული AI ინდუსტრიის განვითარებებით'
       : 'Stay updated with the AI industry\'s hottest developments',
     viewAllNews: language === 'ka' ? 'ყველა სიახლის ნახვა' : 'View All News',
-    ready: language === 'ka' ? 'მზად არის მომავალი გამოეკვლოთ?' : 'Ready to Explore the Future?',
+    ready: language === 'ka' ? 'მზად ხართ შეიცნოთ მომავალი?' : 'Ready to Explore the Future?',
     readyDesc: language === 'ka' 
-      ? 'დაუკავშირდით ათასებს პროფესიონალებს, რომლებიც აღმოაჩენენ და დაეუფლებიან უახლესი AI ხელსაწყოებს'
+      ? 'დაუკავშირდით პროფესიონალებს, რითიც აღმოაჩენთ და დაეუფლებით უახლეს AI ხელსაწყოებს'
       : 'Join thousands of professionals discovering and mastering the latest AI tools',
     startExploring: language === 'ka' ? 'დაიწყეთ გამოკვლევა ახლავე' : 'Start Exploring Now',
   };
@@ -135,21 +135,50 @@ export default function Home() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-4xl mx-auto">
-            {[
-              { icon: Target, label: translations.reviewed, value: "200+" },
-              { icon: Users, label: translations.readers, value: "50K+" },
-              { icon: TrendingUp, label: translations.updates, value: "100+" }
-            ].map((stat, index) => (
-              <div key={index} className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
-                <stat.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stat.value}
-                </div>
-                <div className="text-gray-600 dark:text-gray-400">
-                  {stat.label}
-                </div>
+            {/* AI Tools Reviewed - Dynamic */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
+              <Target className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                {toolsLoading ? '...' : allTools.length}
               </div>
-            ))}
+              <div className="text-gray-600 dark:text-gray-400">
+                {translations.toolsReviewed}
+              </div>
+            </div>
+
+            {/* Articles Published - Dynamic */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
+              <BookOpen className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                {postsLoading ? '...' : recentPosts.length}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                {translations.articles}
+              </div>
+            </div>
+
+            {/* Monthly Updates - Static */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
+              <TrendingUp className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                100+
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                {translations.updates}
+              </div>
+            </div>
+
+            {/* Readers - Commented out for future use
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
+              <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                50K+
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                Active Readers
+              </div>
+            </div>
+            */}
           </div>
         </div>
       </section>

@@ -1,4 +1,4 @@
-// components/BlogCard.jsx - Updated with Georgian support and images
+// components/BlogCard.jsx - WITH GEORGIAN SUPPORT AND TRANSLATIONS
 
 import React from "react";
 import { Link } from "react-router-dom";
@@ -9,11 +9,13 @@ import { Calendar, Clock, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/components/LanguageContext";
 import { getLocalizedField } from "@/lib/localization";
+import { translations } from "@/components/translations";
 
 export default function BlogCard({ post }) {
   if (!post) return null;
 
   const { language } = useLanguage();
+  const t = (key) => translations[key]?.[language] || translations[key]?.['en'] || '';
 
   // Get localized content
   const title = getLocalizedField(post, 'title', language);
@@ -40,7 +42,7 @@ export default function BlogCard({ post }) {
   // Format date based on language
   const formattedDate = post.created_at ? 
     format(new Date(post.created_at), language === 'ka' ? 'dd MMM yyyy' : 'MMM dd, yyyy') :
-    'Unknown date';
+    language === 'ka' ? 'უცნობი თარიღი' : 'Unknown date';
 
   return (
     <Link
@@ -83,7 +85,7 @@ export default function BlogCard({ post }) {
 
           {/* Excerpt */}
           <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
-            {excerpt || "No excerpt available"}
+            {excerpt || (language === 'ka' ? 'შენიშვნა არ არის ხელმისაწვდომი' : 'No excerpt available')}
           </p>
 
           {/* Meta Info - Date, Read Time, Views */}
@@ -98,7 +100,7 @@ export default function BlogCard({ post }) {
             {readTime && (
               <div className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                <span>{readTime} {language === 'ka' ? 'წთ' : 'min'}</span>
+                <span>{readTime} {t('minRead')}</span>
               </div>
             )}
 
@@ -113,7 +115,7 @@ export default function BlogCard({ post }) {
           {post.author && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                By <span className="font-medium text-gray-900 dark:text-white">{post.author}</span>
+                {language === 'ka' ? 'ავტორი:' : 'By'} <span className="font-medium text-gray-900 dark:text-white">{post.author}</span>
               </p>
             </div>
           )}
