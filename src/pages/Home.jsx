@@ -12,27 +12,25 @@ import ToolCard from "../components/ToolCard";
 import BlogCard from "../components/BlogCard";
 import NewsCard from "../components/NewsCard";
 import { useLanguage } from "@/components/LanguageContext";
-import { translations } from "@/components/translations";
+import { getLocalizedField } from "@/lib/localization";
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
   
   // Fetch featured tools
   const { data: toolsData = [], isLoading: toolsLoading } = useTools({
-    is_featured: true,
     ordering: '-created_at',
   });
   
   // Helper function to safely extract array from data
   const extractArray = (data) => {
-    console.log('Raw data:', data); // Debug log
     if (!data) return [];
     if (Array.isArray(data)) return data;
     if (data.results && Array.isArray(data.results)) return data.results;
     return [];
   };
 
-  // Normalize tools data - handle both array and paginated response
+  // Normalize tools data
   const allTools = useMemo(() => extractArray(toolsData), [toolsData]);
   const featuredTools = allTools.slice(0, 3);
 
@@ -52,6 +50,40 @@ export default function Home() {
   // Normalize news data
   const recentNews = useMemo(() => extractArray(newsData), [newsData]);
 
+  // Translations
+  const translations = {
+    heroTitle1: language === 'ka' ? 'აღმოაჩინეთ და დაეუფლეთ' : 'Discover & Master',
+    heroTitle2: language === 'ka' ? 'ხვალინდელი AI ხელსაწყოები' : 'AI Tools of Tomorrow',
+    heroSubtitle: language === 'ka' 
+      ? 'ყოვლისმომცველი მიმოხილვები, ნაბიჯ-ნაბიჯ სახელმძღვანელოები და უახლესი განახლებები ყველაზე ძლიერი AI ხელსაწყოების შესახებ, რომლებიც აყალიბებენ ჩვენს მომავალს.'
+      : 'Comprehensive reviews, step-by-step guides, and the latest updates on the most powerful AI tools shaping our future.',
+    exploreTools: language === 'ka' ? 'გამოიკვლიეთ ხელსაწყოები' : 'Explore AI Tools',
+    readGuides: language === 'ka' ? 'წაიკითხეთ სახელმძღვანელოები' : 'Read Guides',
+    reviewed: language === 'ka' ? 'მიმოხილული' : 'AI Tools Reviewed',
+    readers: language === 'ka' ? 'აქტიური მკითხველი' : 'Active Readers',
+    updates: language === 'ka' ? 'ყოველთვიური განახლება' : 'Monthly Updates',
+    featuredTools: language === 'ka' ? 'პოპულარული AI ხელსაწყოები' : 'Featured AI Tools',
+    featuredDesc: language === 'ka' 
+      ? 'კარგად შერჩეული ხელსაწყოები, რომლებიც აკეთებენ ღირებულ აქტივობას AI თემში'
+      : 'Hand-picked tools that are making waves in the AI community',
+    viewAllTools: language === 'ka' ? 'ყველა ხელსაწყოს ნახვა' : 'View All AI Tools',
+    latestArticles: language === 'ka' ? 'უახლესი სტატიები' : 'Latest Articles',
+    articlesDesc: language === 'ka' 
+      ? 'AI ექსპერტებისგან სიღრმის სახელმძღვანელოები და ინფორმაცია'
+      : 'In-depth guides and insights from AI experts',
+    viewAllPosts: language === 'ka' ? 'ყველა სტატიის ნახვა' : 'View All Posts',
+    latestNews: language === 'ka' ? 'სიახლეები' : 'Latest AI News',
+    newsDesc: language === 'ka' 
+      ? 'იყავით განახლებული AI ინდუსტრიის ყველაზე ცხელი განვითარებებით'
+      : 'Stay updated with the AI industry\'s hottest developments',
+    viewAllNews: language === 'ka' ? 'ყველა სიახლის ნახვა' : 'View All News',
+    ready: language === 'ka' ? 'მზად არის მომავალი გამოეკვლოთ?' : 'Ready to Explore the Future?',
+    readyDesc: language === 'ka' 
+      ? 'დაუკავშირდით ათასებს პროფესიონალებს, რომლებიც აღმოაჩენენ და დაეუფლებიან უახლესი AI ხელსაწყოებს'
+      : 'Join thousands of professionals discovering and mastering the latest AI tools',
+    startExploring: language === 'ka' ? 'დაიწყეთ გამოკვლევა ახლავე' : 'Start Exploring Now',
+  };
+
   return (
     <div className="bg-gray-50 dark:bg-gray-950">
       {/* Hero Section */}
@@ -65,23 +97,23 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-900 shadow-lg mb-8 border border-indigo-100 dark:border-indigo-900">
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Your AI Discovery Hub
+                {language === 'ka' ? 'თქვენი AI აღმოჩენის Hub' : 'Your AI Discovery Hub'}
               </span>
             </div>
 
             {/* Main Heading */}
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {t(translations.heroTitle1)}
+                {translations.heroTitle1}
               </span>
               <br />
               <span className="text-gray-900 dark:text-white">
-                {t(translations.heroTitle2)}
+                {translations.heroTitle2}
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
-              {t(translations.heroSubtitle)}
+              {translations.heroSubtitle}
             </p>
 
             {/* CTA Buttons */}
@@ -89,13 +121,13 @@ export default function Home() {
               <Link to={createPageUrl("AITools")}>
                 <Button className="px-8 py-6 text-lg theme-gradient hover:theme-gradient-hover text-white shadow-xl hover:shadow-2xl transition-all ripple">
                   <Zap className="w-5 h-5 mr-2" />
-                  {t(translations.exploreTools)}
+                  {translations.exploreTools}
                 </Button>
               </Link>
               <Link to={createPageUrl("Blog")}>
                 <Button variant="outline" className="px-8 py-6 text-lg border-2 hover:bg-gray-50 dark:hover:bg-gray-900">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  {t(translations.readGuides)}
+                  {translations.readGuides}
                 </Button>
               </Link>
             </div>
@@ -104,9 +136,9 @@ export default function Home() {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-4xl mx-auto">
             {[
-              { icon: Target, label: t(translations.Reviewed), value: "200+" },
-              { icon: Users, label: t(translations.Readers), value: "50K+" },
-              { icon: TrendingUp, label: t(translations.Updates), value: "100+" }
+              { icon: Target, label: translations.reviewed, value: "200+" },
+              { icon: Users, label: translations.readers, value: "50K+" },
+              { icon: TrendingUp, label: translations.updates, value: "100+" }
             ].map((stat, index) => (
               <div key={index} className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-800 text-center">
                 <stat.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-3" />
@@ -128,15 +160,15 @@ export default function Home() {
           <div className="flex items-center justify-between mb-12">
             <div>
               <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                Featured {t(translations.aiTools)}
+                {translations.featuredTools}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Hand-picked tools that are making waves in the AI community
+                {translations.featuredDesc}
               </p>
             </div>
             <Link to={createPageUrl("AITools")}>
               <Button variant="outline" className="hidden md:flex items-center gap-2">
-                {t(translations.viewAll)} {t(translations.aiTools)}
+                {translations.viewAllTools}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -151,7 +183,7 @@ export default function Home() {
           <div className="mt-8 md:hidden text-center">
             <Link to={createPageUrl("AITools")}>
               <Button variant="outline" className="w-full sm:w-auto">
-                {t(translations.viewAll)} {t(translations.aiTools)}
+                {translations.viewAllTools}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -168,16 +200,16 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-2">
                   <BookOpen className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                   <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-                    Latest {t(translations.articles)}
+                    {translations.latestArticles}
                   </h2>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400">
-                  In-depth guides and insights from AI experts
+                  {translations.articlesDesc}
                 </p>
               </div>
               <Link to={createPageUrl("Blog")}>
                 <Button variant="outline" className="hidden md:flex items-center gap-2">
-                  {t(translations.viewAll)} Posts
+                  {translations.viewAllPosts}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -192,7 +224,7 @@ export default function Home() {
             <div className="mt-8 md:hidden text-center">
               <Link to={createPageUrl("Blog")}>
                 <Button variant="outline" className="w-full sm:w-auto">
-                  {t(translations.viewAll)} Posts
+                  {translations.viewAllPosts}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -209,16 +241,16 @@ export default function Home() {
               <div className="flex items-center gap-3 mb-2">
                 <Newspaper className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-                  Latest {t(translations.news)}
+                  {translations.latestNews}
                 </h2>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                Stay updated with the AI industry's hottest developments
+                {translations.newsDesc}
               </p>
             </div>
             <Link to={createPageUrl("News")}>
               <Button variant="outline" className="hidden md:flex items-center gap-2">
-                {t(translations.viewAll)} {t(translations.news)}
+                {translations.viewAllNews}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -233,7 +265,7 @@ export default function Home() {
           <div className="mt-8 md:hidden text-center">
             <Link to={createPageUrl("News")}>
               <Button variant="outline" className="w-full sm:w-auto">
-                {t(translations.viewAll)} {t(translations.news)}
+                {translations.viewAllNews}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -246,14 +278,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Sparkles className="w-16 h-16 text-white mx-auto mb-6" />
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Explore the Future?
+            {translations.ready}
           </h2>
           <p className="text-xl text-indigo-100 mb-8">
-            Join thousands of professionals discovering and mastering the latest AI tools
+            {translations.readyDesc}
           </p>
           <Link to={createPageUrl("AITools")}>
             <Button className="px-8 py-6 text-lg bg-white text-indigo-600 hover:bg-gray-100 shadow-xl hover:shadow-2xl transition-all ripple">
-              {t(translations.startExploring)}
+              {translations.startExploring}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>
